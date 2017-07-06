@@ -15,7 +15,7 @@ func Append(s Value, x ...Value) Value {
 一下子感觉好简单，首先这个`s.mustBe(Slice)`，一看就知道是什么意思了。
 它是以变量s的kind()属性和常量的Slice数字对比，如果都是23（代表Slice)类型，那么就通过验证。  
 `s, i0, i1 := grow(s, len(x))`接下来的这一段，gorw()是一个比较长的函数。
-```
+```go
 /*
  * 传入s切片，x的数量（就是一共传进来几个x)
  * 传出新的切片，两个整数
