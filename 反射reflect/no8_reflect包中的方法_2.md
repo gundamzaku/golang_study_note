@@ -54,3 +54,5 @@ func grow(s Value, extra int) (Value, int, int) {
 ```
 
 要记住的是，返回的是s, i0, i1三个变量，s代表新的切片，io代表老切片大小，i1代表新切片的大小
+
+我的代码中，i0是5，i1是7。
