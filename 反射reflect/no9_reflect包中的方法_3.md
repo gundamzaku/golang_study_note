@@ -35,3 +35,4 @@ func newarray(typ *_type, n int) unsafe.Pointer {
 大目标（大小32KB）的，被分配到直接堆中？
 ```
 这下搞大了，直接渗透到go的底层来了。
+http://colabug.com/117591.html
