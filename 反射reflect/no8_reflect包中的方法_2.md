@@ -88,3 +88,40 @@ Elem返回类型的元素类型。
 typ.Elem()是一个Type的interface，`(*rtype)`这种引用方式我就不理解了，在interface里面的方法里只有一个common()的对象是`*rtype`类型的，那会不会是它呢？不妨我直接替换在.common()试一下看看。  
 `s := sliceHeader{unsafe_NewArray(typ.Elem().common(), cap), len, cap}`
 成功运行了，难道是真的？可是我还是难以理解这种方式的写法，还是用一个小例子看一下吧。 
+
+```go
+package main
+
+import "fmt"
+
+type Type interface {
+	Elem() Type
+	common() *rtype
+}
+
+type rtype struct {
+	size int
+	name string
+}
+func (t *rtype) Elem() Type {
+	var temp = new(rtype)
+	temp.size = 100
+	return temp
+}
+func (t *rtype)common() *rtype {
+	t.size = 80 
+	fmt.Println("hello")
+	return t
+}
+
+func main() {
+
+	var typ Type = new(rtype)
+	rs:=typ.Elem()
+	fmt.Println(rs.(*rtype))
+}
+
+result:&{100 }
+```
+
+可见，代码并没有走common()，我想错了。那么……在`rs.(*rtype)`中`(*rtype)`就是表示是这个对象它本身吧？
