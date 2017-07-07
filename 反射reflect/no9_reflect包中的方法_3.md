@@ -13,3 +13,25 @@ func reflect_unsafe_NewArray(typ *_type, n int) unsafe.Pointer {
 }
 ```
 看这一段代码的描述，reflect_unsafe_NewArray与reflect.unsafe_NewArray做了链接。
+
+```go
+// newarray allocates an array of n elements of type typ.
+func newarray(typ *_type, n int) unsafe.Pointer {
+	if n < 0 || uintptr(n) > maxSliceCap(typ.size) {
+		panic(plainError("runtime: allocation size out of range"))
+	}
+	return mallocgc(typ.size*uintptr(n), typ, true)
+}
+```
+
+最后指到mallocgc()方法上面，这方法一看就晕了，太长。根据以前对C知识的了解，malloc，肯定是开内存去了。  
+先看一下注释吧。  
+```
+// Allocate an object of size bytes.
+分配一个比特大小的目标
+// Small objects are allocated from the per-P cache's free lists.
+小目标被分配到per-P 缓存的空闲列表中
+// Large objects (> 32 kB) are allocated straight from the heap.
+大目标（大小32KB）的，被分配到直接堆中？
+```
+这下搞大了，直接渗透到go的底层来了。
