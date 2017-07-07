@@ -164,4 +164,4 @@ for i, j := i0, 0; i < i1; i, j = i+1, j+1 {
 ```
 这一段就更加不用废话了，就是把我要添加的数据追加到新的slice数据之中。最后完成了slice的Append作业。  
 
-最后再总结一下，首先，我要为我的老Slice{Mon Tues Wed Thur Fri}添加sat sun，于是我用reflect中的reflect.Append方法，在这个方法中，go去生成了一个SliceCopy{7个填充数字}，然后把sat sun填进了这个Copy之中。而老的slice仍然存在。这当中有些看不懂的地方，涉及到了底层的数据结构，因此，暂时一笔代过，以后有深入到研究的地方可以再一控究竟。  
+最后再总结一下，首先，我要为我的老Slice{Mon Tues Wed Thur Fri}添加sat sun，于是我用reflect中的reflect.Append方法，在这个方法中，go去生成了一个SliceCopy{7个填充数字}，然后把sat sun填进了这个Copy之中。而老的slice仍然存在。这当中有些看不懂的地方，涉及到了底层的数据结构，因此，暂时一笔代过，以后有深入到研究的地方可以再一探究竟。  
