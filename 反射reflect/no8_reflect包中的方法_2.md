@@ -56,3 +56,35 @@ func grow(s Value, extra int) (Value, int, int) {
 要记住的是，返回的是s, i0, i1三个变量，s代表新的切片，io代表老切片大小，i1代表新切片的大小
 
 我的代码中，i0是5，i1是7。
+
+整个方法中最关键的是变量m的用处，一开始的时候，在`m := s.Cap()`时，m的值为5，此时i1的值为7  
+m比i1小，因此进入了下面的代码块  
+```go
+if i0 < 1024 {
+	m += m
+} else {
+	m += m / 4
+}
+```
+i0现在的值为5，肯定小于1024，因此m=m+m变成了10,其实这一段非常费解，为什么在i0小于1024的情况下m是做翻倍，而在大于1024的情况下，是翻25%呢？一个想法，可能是空间优化。没关系，继续读下去。  
+m现在是10，走`t := MakeSlice(s.Type(), i1, m)`的代码，传入的变量分别是：s.Type(),7,10。
+s.Type()其实也是一段非常复杂的方法，不过这里不用太去纠结这个方法的用处，因为在MakeSlice方法中，主要是想用到s.Type().kind() 和s.Type().common()，kind()值是23，表示是slice类型。这主要是做数据校验用的。抛开这一层面的话，MakeSlice的方法就剩下两段了：
+```go
+s := sliceHeader{unsafe_NewArray(typ.Elem().(*rtype), cap), len, cap}
+return Value{typ.common(), unsafe.Pointer(&s), flagIndir | flag(Slice)}
+```
+typ.common()是指到rtpye地址的指针，rtype就是变量的信息；flagIndir | flag(Slice)前面也有提到过，是一个128和23的或运算，最后变成151。
+
+那s是求出什么值呢？在传入的三个参数中，len和cap都很好理解，len是新生成的切片长度（7），cap是系统现在给你的长度(10)  
+`unsafe_NewArray(typ.Elem().(*rtype), cap)`就有点费解了。特别是`typ.Elem().(*rtype)`这一段，
+看针对typ.Elem()的注释  
+```
+// Elem returns a type's element type.
+Elem返回类型的元素类型。
+// It panics if the type's Kind is not Array, Chan, Map, Ptr, or Slice.
+如果不是Array,Chan,Map,Ptr或Slice的话，就会出错。
+```
+这样一来就好理解了typ.Elem()返回的就是切片里面的数据的数据类型，现在我`println(typ.Elem().Kind())`看一下，返回是24，表示字符串类型。  
+typ.Elem()是一个Type的interface，`(*rtype)`这种引用方式我就不理解了，在interface里面的方法里只有一个common()的对象是`*rtype`类型的，那会不会是它呢？不妨我直接替换在.common()试一下看看。  
+`s := sliceHeader{unsafe_NewArray(typ.Elem().common(), cap), len, cap}`
+成功运行了，难道是真的？可是我还是难以理解这种方式的写法，还是用一个小例子看一下吧。 
