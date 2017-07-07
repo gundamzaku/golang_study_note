@@ -111,11 +111,57 @@ type sliceHeader struct {
 再用Copy(t, s)的方式，我的天啊，一个Copy()也是一段非常复杂的代码。  
 先不管，我们看一下Copy中的t，t就是前面讲的那一堆乱七八糟的内容最后返回的一个sliceHeader{}，s则是老的切片。  
 
+按惯例，先看注释  
 ```go
 // Copy copies the contents of src into dst until either
+复制src的内容到dst
 // dst has been filled or src has been exhausted.
+直到dst被填满或者src用完
 // It returns the number of elements copied.
+返回复制元素的个数
 // Dst and src each must have kind Slice or Array, and
+dst和src必须符合slice或array
 // dst and src must have the same element type.
-func Copy(dst, src Value) int {
+dst和src也必须是同样的元素类型
+func Copy(dst, src Value) int {}
 ```
+我分别打印要传入Copy中的t和s的类型  
+```
+println(t.kind())
+println(s.kind())
+```
+均为23，是Slice类型。符合注释中的说明，于是进行Copy。  
+t是一个7位长的slice，是一个空的，初始化的slice。s则是老的slice，有五个字符数据。  
+```go
+var i int
+print("t的数据：")
+for i = 0;i<t.Len();i++{
+	print(" ",t.Index(i).String())
+}
+println(" ")
+print("s的数据：")
+for i = 0;i<s.Len();i++{
+	print(" ",s.Index(i).String())
+}
+Copy(t, s)
+println(" ")
+print("t的数据(复制完成)：")
+for i = 0;i<t.Len();i++{
+	print(" ",t.Index(i).String())
+}
+
+result:
+t的数据：        
+s的数据： Mon Tues Wed Thur Fri 
+t的数据(复制完成)： Mon Tues Wed Thur Fri  
+```
+通过上面的代码，我们可以了解到复制的过程，也就是说，go产生了一个新的，符合新slice长度的slice变量。然后再把老的slice数据复制进去。  
+接下来回到最早的Append()方法中  
+```go
+for i, j := i0, 0; i < i1; i, j = i+1, j+1 {
+	s.Index(i).Set(x[j])
+}
+```
+这一段就更加不用废话了，就是把我要添加的数据追加到新的slice数据之中。最后完成了slice的Append作业。  
+
+最后再总结一下，首先，我要为我的老Slice{Mon Tues Wed Thur Fri}添加sat sun，于是我用reflect中的reflect.Append方法，在这个方法中，go去生成了一个SliceCopy{7个填充数字}，然后把sat sun填进了这个Copy之中。而老的slice仍然存在。这当中有些看不懂的地方，涉及到了底层的数据结构，因此，暂时一笔代过，以后有深入到研究的地方可以再一控究竟。  
