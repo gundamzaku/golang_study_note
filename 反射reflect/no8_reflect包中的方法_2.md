@@ -125,3 +125,76 @@ result:&{100 }
 ```
 
 可见，代码并没有走common()，我想错了。那么……在`rs.(*rtype)`中`(*rtype)`就是表示是这个对象它本身吧？
+
+根据这个思路，我再写一段代码作为测试  
+
+```go
+package main
+
+import "fmt"
+
+type small interface {
+	Test() int
+	Set()
+}
+
+type club struct {
+	val1 int
+	val2 int
+	val3 string
+}
+
+func (t *club) Set(){
+	t.val1 = 1
+	t.val2 = 2
+	t.val3 = "hello"
+}
+
+func (t *club) Test() int{
+	return 2
+}
+
+func main() {
+	var s small = new(club)
+	s.Set()
+	fmt.Println(s.(*club))
+}
+result:&{1 2 hello}
+```
+现在应该很清晰了，他就是把`s.(*club)`里定义的变量全部返回来。  
+在源代码里面`typ.Elem().(*rtype)`里，typ.Elem()本来就是返回一个Type类型。  
+在Elem()里面  
+```go
+func (t *rtype) Elem() Type {
+	switch t.Kind() {
+	case Array:
+		tt := (*arrayType)(unsafe.Pointer(t))
+		return toType(tt.elem)
+	case Chan:
+		tt := (*chanType)(unsafe.Pointer(t))
+		return toType(tt.elem)
+	case Map:
+		tt := (*mapType)(unsafe.Pointer(t))
+		return toType(tt.elem)
+	case Ptr:
+		tt := (*ptrType)(unsafe.Pointer(t))
+		return toType(tt.elem)
+	case Slice:
+		tt := (*sliceType)(unsafe.Pointer(t))
+		return toType(tt.elem)
+	}
+	panic("reflect: Elem of invalid type")
+}
+```
+我们可以直接定位到`tt := (*sliceType)(unsafe.Pointer(t))`这一段，t就是指向该切片变量的信息的地址  
+```go
+// sliceType represents a slice type.
+type sliceType struct {
+	rtype `reflect:"slice"`
+	elem  *rtype // slice element type
+}
+```
+sliceType存放的就是切片的变量信息，总结一下，就是指向了我前面生成的切片的变量的定义地址，得到了它的有关的信息。
+最后，把`elem  *rtype`完整返回。
+
+听起来绕口，其实多看几次，很容易就可以掌握了，最关键的一点是要搞清楚`rtpye`的作用。
