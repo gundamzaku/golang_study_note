@@ -8,4 +8,91 @@ var b = [5]int {6, 7, 8, 9, 0}
 c := reflect.Copy(reflect.ValueOf(a),reflect.ValueOf(b))
 ```
 
-问题就出在reflect.ValueOf()上面，
+问题就出在reflect.ValueOf()上面，在重新看这个方法的时候，我们先追溯一下源头，Value到底是一种什么样的类型。  
+Value是一个对象：  
+```go
+type Value struct {
+  typ *rtype
+  ptr unsafe.Pointer
+  flag
+}
+func (v Value) pointer() unsafe.Pointer {}
+func (v Value) Addr() Value {}
+等等
+```
+在源代码中，有丰富的注释解决了这个结构体的作用。  
+```
+// Value is the reflection interface to a Go value.
+//value是Go的一个反射型接口
+// Not all methods apply to all kinds of values. Restrictions,
+不是所有方法支付值的所有类型
+……
+// Its IsValid method returns false, its Kind method returns Invalid,
+无效的方法返回false，它的种类方法返回无效。  
+Using == on two Values does not compare the underlying values
+两个Value类型不能用来进行比较
+// To compare two Values, compare the results of the Interface method.
+要想比较，需要使用接口方法
+```
+
+比较这一部分是真的吗？我先试一下看看。  
+```go
+var a int32 = 16
+var b int32 = 16
+fmt.Println(reflect.ValueOf(a)==reflect.ValueOf(b))  
+```
+果然返回false，两者已经不能进行比较了。
+我们可以分别对比一下这两个a，b经过valueOf()已经分别变成了两个不同的对象。
+而这个Value对象一共有58个方法，比较夸张。  
+我打印几个常用的方法看一下  
+```go
+var a int32 = 16
+va := reflect.ValueOf(a)
+fmt.Println(va.String())
+fmt.Println(va.Type())
+fmt.Println(va.CanAddr())
+result:
+<int32 Value>
+int32
+false
+```
+这些方法就是一个变量常用的信息吧，也就是说我把一个变量转化成了Value类型以后，就可以调用查看这个变量的相关属性信息（甚至是操作）  
+这里的va.CanAddr()就是前面我碰到的报错的原因。我的数组，转成了Value，va.CanAddr()返回的是False，导致无法进行Copy操作。原因不明  
+
+既然如此，我就单独拎这一段代码的功能来看看，它做了什么事情。  
+
+```go
+// CanAddr reports whether the value's address can be obtained with Addr.
+CanAddr报告了这个值的地址是否能以Addr的方式获得？
+// Such values are called addressable. A value is addressable if it is
+诸如此值被称为addressable，一个值可以addressable
+// an element of a slice, an element of an addressable array,
+假如他是一个slice元素，一个addressable(可访问)的数组,
+// a field of an addressable struct, or the result of dereferencing a pointer.
+一个可访问的结构的领域，或者一个非关联化的指针
+// If CanAddr returns false, calling Addr will panic.
+如果返回false，你调用Addr将会报错。
+func (v Value) CanAddr() bool {
+	return v.flag&flagAddr != 0
+}
+```
+好了，看完了，表示没看懂，为什么我定义的数组CanAddr是False呢？  
+我现在转成数组  
+```
+var a [2]int32
+a[0] = 1
+a[1] = 2
+va := reflect.ValueOf(a)
+fmt.Println(va.String())
+fmt.Println(va.Type())
+fmt.Println(va.CanAddr())
+
+result:
+<[2]int32 Value>
+[2]int32
+false
+```
+
+确实CanAddr()是False。说明我这个不是一个an addressable array，那什么才是an addressable array，真是好抓狂。  
+
+
