@@ -135,17 +135,104 @@ fmt.Println(c)
 func unpackEface(i interface{}) Value {
 	//传入之前的a实际地址是0xc042048270
 	//i:(0x491e00,0xc042048270)这是转成interface{}以后的形式
-	e := (*emptyInterface)(unsafe.Pointer(&i))
-	// NOTE: don't read e.word until we know whether it is really a pointer or not.
-	t := e.typ
+	//下面这段代码可以将传入的i还原回int数组
+	//var b [5]int;
+	//b = *(*[5]int)(unsafe.Pointer(i.(*[5]int)))
+	
+	e := (*emptyInterface)(unsafe.Pointer(&i))//这段可以理解成指向了i的地址的指针
+	t := e.typ//赋于了变量的属性,e.typ.String()显示为*[5]int,e指向了i,e.typ.Kind()显示为22
 	if t == nil {
 		return Value{}
 	}
-	f := flag(t.Kind())
+	f := flag(t.Kind())//现在它变成了Ptr的类型，数字为22，不是数组了
 
 	if ifaceIndir(t) {
 		f |= flagIndir
 	}
-	return Value{t, e.word, f}
+	return Value{t, e.word, f}//这里返回的是一个指针
 }
 ```
+`注意`在我的调试过程中，出现了一个奇怪的问题，因为我一直将build -a 这个参数打开的，然而我在执行上面的代表的时候，意外的发现reflect.ValueOf(&a)会执行两次。我不知道是什么问题，写了一段程序测试一下。  
+
+```go
+func main()  {
+	var a int = 10;
+	fmt.Println(a)
+	geti(a)
+}
+
+func geti(i int){
+	fmt.Println(i)
+}
+正常
+```
+
+```go
+func main()  {
+	var a int = 10;
+	fmt.Println(a)
+	geti(&a)
+}
+
+func geti(i *int){
+	fmt.Println(*i)
+}
+
+正常
+```
+
+```go
+func main()  {
+	var a int = 10;
+	fmt.Println(a)
+	geti(&a)
+}
+
+func geti(i *int){
+	fmt.Println(i)
+}
+
+result:
+(0x491b60,0xc0420381d0) //这是我在valueOf()方法中的打印
+10
+0xc0420381d0
+```
+
+很费解，惟一的区别就是正常的那次我是打印指针指向的变量了，不正常的这次我是打印指针地址，可是不知道为什么会去触发ValueOf()方法。在此存疑。
+
+reflect.ValueOf(&a)得到的是一个指针->a的地址，这个指针怎么会有Elem()？
+再回到Copy()方法里面。
+dk := dst.kind() //输出为17，是指针。奇怪，怎么又变成了指针了？
+
+我又回到Elem()方法上面，看了一眼它的注释，似乎都明白了……
+```
+// Elem returns the value that the interface v contains
+Elem返回interface v包含的值
+// or that the pointer v points to.
+或者指针v所指向的地址（重点）
+// It panics if v's Kind is not Interface or Ptr.
+在v的类型不是interface或ptr的时候报错
+// It returns the zero Value if v is nil.
+当v是nil的时候返回空值
+```
+似乎是全明白了……  
+再看一下里面的代码部分吧  
+```go
+case Ptr: //如果是指针
+	ptr := v.ptr//指针所指的地址给指针，ptr这时候就指向了指向数组的地址
+	if v.flag&flagIndir != 0 {//校验
+		ptr = *(*unsafe.Pointer)(ptr)
+	}
+	// The returned value's address is v's value.
+	if ptr == nil {//为空时
+		return Value{}
+	}
+	tt := (*ptrType)(unsafe.Pointer(v.typ))//组合成ptrType
+	typ := tt.elem //取到数组
+	fl := v.flag&flagRO | flagIndir | flagAddr
+	fl |= flag(typ.Kind())
+	return Value{typ, ptr, fl}
+}
+```
+
+差不多就这样吧，Copy()方法基本上就全部了解了。
