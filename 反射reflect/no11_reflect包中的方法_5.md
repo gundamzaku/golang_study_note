@@ -78,7 +78,7 @@ func (v Value) CanAddr() bool {
 ```
 好了，看完了，表示没看懂，为什么我定义的数组CanAddr是False呢？  
 我现在转成数组  
-```
+```go
 var a [2]int32
 a[0] = 1
 a[1] = 2
