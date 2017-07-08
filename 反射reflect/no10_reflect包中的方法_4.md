@@ -123,14 +123,18 @@ func Copy(dst, src Value) int {
 	if dk == Array {//不是数组，这一步跳过（关于数组，这里先不讲，后面再讲）
 		dst.mustBeAssignable()
 	}
-	dst.mustBeExported()
-
+	dst.mustBeExported()//必须是输出的？
+	//if f records that the value was obtained using an unexported field.
+	//如果f记录的值是非输出领域得到的？不太理解
+	
+	//下面与dk雷同
 	sk := src.kind()
 	if sk != Array && sk != Slice {
 		panic(&ValueError{"reflect.Copy", sk})
 	}
 	src.mustBeExported()
-
+	
+	//验证dst和src内部的元素类型，必须一样
 	de := dst.typ.Elem()
 	se := src.typ.Elem()
 	typesMustMatch("reflect.Copy", de, se)
@@ -141,6 +145,7 @@ func Copy(dst, src Value) int {
 		ds.Len = dst.Len()
 		ds.Cap = ds.Len
 	} else {
+		//ds指到sliceHeader（故且先这么理解吧）
 		ds = *(*sliceHeader)(dst.ptr)
 	}
 	if sk == Array {
@@ -148,9 +153,39 @@ func Copy(dst, src Value) int {
 		ss.Len = src.Len()
 		ss.Cap = ss.Len
 	} else {
+		//ss指到sliceHeader（故且先这么理解吧）
 		ss = *(*sliceHeader)(src.ptr)
 	}
 
 	return typedslicecopy(de.common(), ds, ss)
 }
 ```
+
+最后，调用了下面这个方法，返回结果。
+`func typedslicecopy(elemType *rtype, dst, src sliceHeader) int`
+同样的，这个方法在runtime包中的mbarrier.go中有实现的方法，可以参考一下，这里就不多讲了，反正讲半天也是一知半解。  
+返回的是int类型，告诉结果是成功还是失败。
+
+以上是我拿之前的slice的例子进行的调试，看Copy()的源码时可以看到是支持Array数组的，那么为了单独测试一下reflect.Copy()的用法，我就找一个Array的例子吧。  
+
+```go
+var a = [5]int {1, 2, 3, 4, 5}
+var b = [5]int {6, 7, 8, 9, 0}
+c := reflect.Copy(reflect.ValueOf(a),reflect.ValueOf(b))
+fmt.Println(a)
+fmt.Println(b)
+fmt.Println(c)
+
+result:
+panic: reflect: reflect.Copy using unaddressable value
+```
+
+执行了一下……唔，报错。  
+错误出在`func (f flag) mustBeAssignable() {}`方法之中。
+```go
+if f&flagAddr == 0 {
+	panic("reflect: " + methodName() + " using unaddressable value")
+}
+```
+这是怎么回事，似乎是f&flagAddr变成了0？
+f和flagAddr分别是145和256，两者的与运算确实是0。
