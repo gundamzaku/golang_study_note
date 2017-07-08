@@ -95,4 +95,57 @@ false
 
 确实CanAddr()是False。说明我这个不是一个an addressable array，那什么才是an addressable array，真是好抓狂。  
 
+正当我陷入深深地绝望的时候，万能的Google赐给了我一段下面的代码（这可是我搜索了近4个小时才找到的一点曙光，千万不能错过）
 
+```go
+a := 100
+va := reflect.ValueOf(a)
+vp := reflect.ValueOf(&a).Elem()
+fmt.Println(va.CanAddr(), va.CanSet())
+fmt.Println(vp.CanAddr(), vp.CanSet())
+
+resut:
+false false
+true true
+```
+竟然有CanAddr()为true了，`vp := reflect.ValueOf(&a).Elem()`这段代码给了我灵感，我试着将自己的代码也改成这样的形式。  
+
+```go
+var b [2]int
+b[0] = 2
+va := reflect.ValueOf(&b).Elem()
+fmt.Println(va.String())
+fmt.Println(va.Type())
+fmt.Println(va.CanAddr())
+```	
+成功了！va.CanAddr()的结果为true，也不管具体的原理，我迫不急待地拿上一篇报错的代码进行进一步的调试。  
+```go
+var a = [5]int {1, 2, 3, 4, 5}
+var b = [5]int {6, 7, 8, 9, 0}
+c := reflect.Copy(reflect.ValueOf(&a).Elem(),reflect.ValueOf(b))
+fmt.Println(a)
+fmt.Println(b)
+fmt.Println(c)
+```
+成功地把b复制到了a身上！感觉google，一个困扰了一天的难道终于迎刃而解。  
+现在就要看一下到底为什么要这样呢？  
+&a是一个地址，程序把地址转换成了一个Value类型？还是点进源码里看一看究竟。  
+```go
+在这个方法中，我们把&a作为一个interface{}传入。
+func unpackEface(i interface{}) Value {
+	//传入之前的a实际地址是0xc042048270
+	//i:(0x491e00,0xc042048270)这是转成interface{}以后的形式
+	e := (*emptyInterface)(unsafe.Pointer(&i))
+	// NOTE: don't read e.word until we know whether it is really a pointer or not.
+	t := e.typ
+	if t == nil {
+		return Value{}
+	}
+	f := flag(t.Kind())
+
+	if ifaceIndir(t) {
+		f |= flagIndir
+	}
+	return Value{t, e.word, f}
+}
+```
