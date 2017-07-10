@@ -230,19 +230,25 @@ name是一种编码类型名称和一些非强制的扩展数据
 	好吧……完全不明白啊
 //
 // The next two bytes are the data length:
-
+后两个bytes是数据长度
 //
 //	 l := uint16(data[1])<<8 | uint16(data[2])
 //
+就是data[1]和data[2]吧
 // Bytes [3:3+l] are the string data.
+从bytes[3]开始，到l的位置，是字符串数据
 //
 // If tag data follows then bytes 3+l and 3+l+1 are the tag length,
+如果标签数据随在后面，那么bytes3+l到bytes 3+l+1是tag的长度
 // with the data following.
 //
 // If the import path follows, then 4 bytes at the end of
+如果导入路径跟着后面，那么后面的4bytes在后面表示这个数据来自于nameOff？
 // the data form a nameOff. The import path is only set for concrete
 // methods that are defined in a different package than their type.
+这个导入路径仅仅是设置具体方法，和在不同包中的对他们类型的定义？
 //
 // If a name starts with "*", then the exported bit represents
 // whether the pointed to type is exported.
+不翻了，看不懂了
 ```
