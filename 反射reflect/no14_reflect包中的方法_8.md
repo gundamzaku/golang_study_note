@@ -57,3 +57,19 @@ slice.elem = typ
 slice.ptrToThis = 0
 ```
 产生一个slice type，这个type只做了一次，然后存入缓存，再也不会做了。
+
+而正在我调试这段代码的时候，在上一节中困扰我的一个问题，突然看到了一点曙光。
+```go
+// Look in known types.
+s := "[]" + typ.String()
+for _, tt := range typesByString(s) {
+	slice := (*sliceType)(unsafe.Pointer(tt))
+	if slice.elem == typ {
+		return cachePut(ckey, tt)
+	}
+}
+```
+就是这段之前我认为没有起到作用的代码，在我这次的时候的时候，突然被触发，并且直接返回了。  
+再看一下注释：在已知的类型中查看。
+
+可是为什么这次就触发了，而上次没有触发呢？
