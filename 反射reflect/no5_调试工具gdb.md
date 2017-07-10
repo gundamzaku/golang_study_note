@@ -37,3 +37,17 @@ GOTRACEBACK=system is like “all” but adds stack frames for run-time function
 GOTRACEBACK=crash is like “system” but crashes in an operating system-specific manner instead of exiting. For example, on Unix systems, the crash raises SIGABRT to trigger a core dump.
 ```
 这里不多做描述，心里有个概念即可。
+
+具体的帮助文档地址：  
+https://golang.org/doc/gdb （需翻墙）
+
+### 产生Test文件
+```
+/Users/liudan/Documents/code/reflect/src
+hello_test.go	main.go		regexp		src.test
+```
+目录中必须带有test测试文件。  
+然后执行go test -c 产生一个src.text文件
+
+### 启动
+gdb src.test
