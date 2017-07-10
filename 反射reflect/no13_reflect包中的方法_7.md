@@ -153,3 +153,59 @@ func typelinks() (sections []unsafe.Pointer, offset [][]int32)
 好吧，我表示看了也是白看，还不如想想到底是怎么实现的吧。
 typelinks返回的是一个无类型的sections地址，一个int32的多维数组。我多写几种例子来测一下有什么区别吧。  
 
+先用原来传入的sb看一下。  
+```
+sections, offset := typelinks()
+println(sections)
+println(offset)
+result:
+[1/1]0xc042050018
+[1/1]0xc04203e400
+```
+咦，不是一个指针一个int吗，怎么两个都是指针了，好吧，我表示很晕，不过在注释上又写着`and a slice of *rtype offsets in each module`，那应该其实返回的就是rtype的地址吧。  
+
+我把我的sb的目标变量改成`var my = [3]string{"a","b","c"}`，仍然是单一的。  
+```
+result:
+[1/1]0xc042050018
+[1/1]0xc04203e400
+```
+很可惜，因为自己的一知半解，在这块上面无法获知更多的信息，谈了几种方式，最后的结果都是[1/1]，或许是用在别的地方的吧。  
+
+我在假设这个方法不透明的情况下，继续执行下去。  
+```go
+for offsI, offs := range offset {
+	//奇怪，offs变成了`[716/716]0x4bf140`,offsI则是0 	
+	section := sections[offsI] //section等于0x489420
+
+	i, j := 0, len(offs)	//i是0，j是716，难道要做716次循环？
+	for i < j {
+		//还好，只执行了9次，每次都要折半，分别是358,537,448,493,471,482,488,491,492
+		h := i + (j-i)/2 // avoid overflow when computing h
+		/*
+		似乎搞清了这里取出来的是什么东西了。
+		358=[16]uint32
+		537=[]strconv.leftCheat
+		448=[8192]uint16
+		493=[][32]*runtime._defer
+		471=[8]uint32
+		482=[]*runtime._type
+		488=[]*runtime.mspan
+		491=[]*runtime.timer
+		492=[]*sync.Pool
+		*/
+		if !(rtypeOff(section, offs[h]).String() >= s) { //rtypeOff()方法是做了地址的偏移
+			i = h + 1 // preserves f(i-1) == false
+		} else {
+			j = h // preserves f(j) == true
+		}
+	}
+	for j := i; j < len(offs); j++ {
+		typ := rtypeOff(section, offs[j])
+		if typ.String() != s {
+			break
+		}
+		ret = append(ret, typ)
+	}
+}
+```
