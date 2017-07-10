@@ -25,7 +25,7 @@ func main()  {
 3、newName()这个方法，我仍然还未有解读。  
 4、fnv1的hash生成方式  
 
-第一个问题，在重新看代码的时候，我发现cacheKey永远只会有一个，因为他的生成规则是cacheKey{Slice, typ, nil, 0}，也就是说，只要是slice变量的话，他永远都是惟一的。这又是怎么回事呢？
+第一个问题，在重新看代码的时候，我发现cacheKey永远只会有一种类型一个key，因为他的生成规则是cacheKey{Slice, typ, nil, 0}，也就是说，只要是slice变量的话，不同的slice{变量类型}，他永远都是惟一的。这又是怎么回事呢？
 
 做一个最简单的例子：
 ```go
@@ -43,6 +43,42 @@ sc2 := reflect.SliceOf(sb2)
 fmt.Println(sc2)
 ```
 在第一次的时候，系统并未产生cache，而在第二次的时候，因为第一次的cache已经写入，故产生了cache，直接返回。这也验证了一点，cache只会有一个，然后不管你怎么生成多少slice（用reflect），都不会再去创建了，而是直接从cache中调取。
+
+而当你上下两种分别赋属于不同的类型时  
+```go
+var my string = "hello"
+sb := reflect.TypeOf(my)
+fmt.Println(sb)
+sc := reflect.SliceOf(sb)
+fmt.Println(sc)
+// 遍历map
+
+var my2 bool = true
+sb2 := reflect.TypeOf(my2)
+fmt.Println(sb2)
+sc2 := reflect.SliceOf(sb2)
+fmt.Println(sc2)
+```
+因为rtype的不同，他也变成了两个cacheKey  
+
+我在reflect包中写了一个方法：
+```go
+func GetLook(){
+
+	for _, v := range lookupCache.m {
+		println("test_")
+		println(v)
+	}
+}
+
+result:
+test_
+0x496200
+test_
+0x495880
+```
+
+确实产生了两个。  
 
 那么现在的问题就可以聚焦于
 ```go
@@ -73,3 +109,132 @@ for _, tt := range typesByString(s) {
 再看一下注释：在已知的类型中查看。
 
 可是为什么这次就触发了，而上次没有触发呢？
+
+我对这段的理解就是，Go在系统中没有找到slice这个属性的空间定义的时候，会产生一个slice的分配（如果简单理解可以想象成是一个模板），然后这个模板就被缓存起来了，每次就会直接调用，而不需要再生成。一种变量类型（string,int)对应一个。  
+
+range typesByString(s)是去系统中对应系统中已经存在的类型，如果存在的话，就直接返回给你（或者可以简单的认为，系统中默认已经生成好的slice），不需要你额外地再去创建，如果真是这样设定的话。。我想，那我自定义一种类型，系统岂不是必然会跳过这一步？也就是我前面碰到的不触发的情况？
+
+于是我决定自定义一种type  
+```go
+type student struct {
+	name string
+	age int
+}
+
+func main()  {
+	var my student
+	sb := reflect.TypeOf(my)
+	fmt.Println(sb)
+	sc := reflect.SliceOf(sb)
+	fmt.Println(sc)
+}
+
+……
+value.go中
+println(slice.tflag)
+println(slice.str)
+println(slice.hash)
+println(slice.elem)
+
+reulst:
+0
+-1
+1383674263
+0x49fc00
+```
+
+果然如此，虽然typesByString(s)这个方法的机制我不是特别了解，但是功能已经比较清晰。
+
+最后，在这一节中，我再看一下newName()这个方法吧。  
+newName作为resolveReflectName（）方法的参数传值，
+`slice.str = resolveReflectName(newName(s, "", "", false))`
+而resolveReflectName要求传入的参数必须是字节数据。
+```go
+type name struct {
+	bytes *byte
+}
+```
+
+因为newName()里面的值都是固定的，也方便我将这段代码抽出来好好测一下。  
+
+```go
+type name struct {
+	bytes *byte
+}
+func newName(n, tag, pkgPath string, exported bool) name {
+
+	if len(n) > 1<<16-1 {	//1<<16-1是65535，控制长度的
+		panic("reflect.nameFrom: name too long: " + n)
+	}
+	if len(tag) > 1<<16-1 {
+		panic("reflect.nameFrom: tag too long: " + tag)
+	}
+
+	var bits byte	//通过成一个字节类型
+
+	l := 1 + 2 + len(n) //n长度是8，l给了11位长度
+	//exported占1位
+	if exported { //这里exported是false，跳过
+		bits |= 1 << 0
+	}
+	//tag的话bits占2位，l还要加2位并加上tag的长度
+	if len(tag) > 0 {//没有tag，跳过
+		l += 2 + len(tag)
+		bits |= 1 << 1
+	}
+	//pkgPath要占4位
+	if pkgPath != "" {//为空，跳过
+		bits |= 1 << 2
+	}
+	//根据l的字节长度，开始产生一个切片。
+	b := make([]byte, l)
+	//bits没生成出来，所以是0
+	b[0] = bits
+	b[1] = uint8(len(n) >> 8)//0，我不知道这段的意义
+	b[2] = uint8(len(n))	//8
+	copy(b[3:], n)//把n 复制到b[3:]后面
+	if len(tag) > 0 {
+		tb := b[3+len(n):]
+		tb[0] = uint8(len(tag) >> 8)
+		tb[1] = uint8(len(tag))
+		copy(tb[2:], tag)
+	}
+
+	if pkgPath != "" {
+		panic("reflect: creating a name with a package path is not supported")
+	}
+	return name{bytes: &b[0]}
+}
+
+func main() {
+	rs:=newName("[]string","", "", false)
+	fmt.Println(rs.bytes)
+}
+```
+
+最后总结，就是生成一个变量的一段特定字节格式，对于name的描述，最好的解释还是只能看文档注释。  
+```
+// name is an encoded type name with optional extra data.
+//
+// The first byte is a bit field containing:
+//
+//	1<<0 the name is exported
+//	1<<1 tag data follows the name
+//	1<<2 pkgPath nameOff follows the name and tag
+//
+// The next two bytes are the data length:
+//
+//	 l := uint16(data[1])<<8 | uint16(data[2])
+//
+// Bytes [3:3+l] are the string data.
+//
+// If tag data follows then bytes 3+l and 3+l+1 are the tag length,
+// with the data following.
+//
+// If the import path follows, then 4 bytes at the end of
+// the data form a nameOff. The import path is only set for concrete
+// methods that are defined in a different package than their type.
+//
+// If a name starts with "*", then the exported bit represents
+// whether the pointed to type is exported.
+```
