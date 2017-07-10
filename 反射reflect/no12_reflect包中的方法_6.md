@@ -96,41 +96,54 @@ cannot use typ (type *reflect.Type) as type reflect.Type in argument to reflect.
 
 我在网上找到了一种方案：  
 ```go
-type s struct {
-
-}
+type s string
 
 func main()  {
-	sc := reflect.SliceOf(reflect.TypeOf(&s{}))
-	fmt.Println(sc)
-
-	mySlice := reflect.MakeSlice(sc,5,10)
-	fmt.Println(mySlice)
-}
-
-result:
-*main.s
-[]*main.s
-[<nil> <nil> <nil> <nil> <nil>]
-```
-可以看出，首先，要创建一个type（我怎么就没想到的。。）,然后用reflect.TypeOf(&s{})转换成Value，然后再用reflect.SliceOf(X)转换，最后就变成了可以传入reflect.MakeSlice()的参数。  
-
-这里有几点困惑的地方，首先，为什么要传入引用（&s[]）；其次，为什么要用reflect.TypeOf()，再次，为什么要用reflect.SliceOf()  
-
-其实我不传引用，这段程序同样可以执行。  
-```go
-func main()  {
-
-	sb := reflect.TypeOf(s{})
+	var my s = "hello"
+	var yo s = "world"
+	sb := reflect.TypeOf(my)
 	fmt.Println(sb)
 	sc := reflect.SliceOf(sb)
 	fmt.Println(sc)
 
-	mySlice := reflect.MakeSlice(sc,5,10)
+	mySlice := reflect.MakeSlice(sc,0,10)
+
+	mySlice = reflect.Append(mySlice,reflect.ValueOf(my),reflect.ValueOf(yo))
+	fmt.Println(mySlice)
+}
+
+main.s
+[]main.s
+[hello world]
+```
+可以看出，首先，要创建一个type（我怎么就没想到的。。）,然后用reflect.TypeOf(&s{})转换成Value，然后再用reflect.SliceOf(X)转换，最后就变成了可以传入reflect.MakeSlice()的参数。  
+
+这里有一点明确的地方，就是要产生一个type，type是声明一个自定义的变量，然后切片的值全部都是基于这个变量的。
+
+那我不基于type可不可以？实际上是可以的。  
+```go
+func main()  {
+	var my string = "hello"
+	var yo string = "world"
+	sb := reflect.TypeOf(my)
+	fmt.Println(sb)
+	sc := reflect.SliceOf(sb)
+	fmt.Println(sc)
+
+	mySlice := reflect.MakeSlice(sc,0,10)
+
+	mySlice = reflect.Append(mySlice,reflect.ValueOf(my),reflect.ValueOf(yo))
 	fmt.Println(mySlice)
 }
 result:
-main.s
-[]main.s
-[{} {} {} {} {}]
+string
+[]string
+[hello world]
 ```
+
+那么问题的关系就在于为什么要用reflect.TypeOf()和为什么要用reflect.SliceOf()了 
+
+从TypeOf()的返回值来看，他确实返回的是一个type类型。原来我一直都是用TypeOf()作变量类型检查的，没想到会这么用。  
+从某种意义上来讲，对于reflect.SliceOf()这个方法来说，它并不关注你传给他的是什么变量，他只关注一点，你传过来的是什么类型。这样一来，就理解了为什么会先reflect.TypeOf()了，reflect.TypeOf()仅仅是把你传进去的东西转换为类型的定义，而这个定义恰恰是reflect.SliceOf()所需要的，reflect.SliceOf()拿到这个定义以后，就会根据这个定义来生成对应的Slice，也就是决定了Slice的内部到底是存String还是存Int类型的数据。  
+
+明白这一点后，就可以看一下func SliceOf(t Type) Type {}这段代码到底是怎么执行的了。
