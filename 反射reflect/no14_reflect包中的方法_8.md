@@ -23,3 +23,37 @@ func main()  {
 1、写入到集合，当然，这也可能是所有的slice对象都要被集合托管？  
 2、typelinks()的机制，似乎与rsyn.pool有关系。  
 3、newName()这个方法，我仍然还未有解读。  
+4、fnv1的hash生成方式  
+
+第一个问题，在重新看代码的时候，我发现cacheKey永远只会有一个，因为他的生成规则是cacheKey{Slice, typ, nil, 0}，也就是说，只要是slice变量的话，他永远都是惟一的。这又是怎么回事呢？
+
+做一个最简单的例子：
+```go
+//step.1
+var my string = "hello"
+sb := reflect.TypeOf(my)
+fmt.Println(sb)
+sc := reflect.SliceOf(sb)
+fmt.Println(sc)
+//step.2
+var my2 string = "hello world"
+sb2 := reflect.TypeOf(my2)
+fmt.Println(sb2)
+sc2 := reflect.SliceOf(sb2)
+fmt.Println(sc2)
+```
+在第一次的时候，系统并未产生cache，而在第二次的时候，因为第一次的cache已经写入，故产生了cache，直接返回。这也验证了一点，cache只会有一个，然后不管你怎么生成多少slice（用reflect），都不会再去创建了，而是直接从cache中调取。
+
+那么现在的问题就可以聚焦于
+```go
+// Make a slice type.
+var islice interface{} = ([]unsafe.Pointer)(nil)
+prototype := *(**sliceType)(unsafe.Pointer(&islice))
+slice := *prototype
+slice.tflag = 0
+slice.str = resolveReflectName(newName(s, "", "", false))
+slice.hash = fnv1(typ.hash, '[')
+slice.elem = typ
+slice.ptrToThis = 0
+```
+产生一个slice type，这个type只做了一次，然后存入缓存，再也不会做了。
