@@ -20,6 +20,6 @@ func main()  {
 
 好了，到这些我不得不再做一次对reflect.MakeSlice()和reflect.SliceOf()的回顾。  
 有很多不理解的地方  
-1、写入到集合，当然，这也可能是所有的slice对象都要被集合托管？
-2、typelinks()的机制，似乎与rsyn.pool有关系。
-3、newName()这个方法，我仍然还未有解读。
+1、写入到集合，当然，这也可能是所有的slice对象都要被集合托管？  
+2、typelinks()的机制，似乎与rsyn.pool有关系。  
+3、newName()这个方法，我仍然还未有解读。  
