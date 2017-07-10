@@ -184,15 +184,16 @@ for offsI, offs := range offset {
 		h := i + (j-i)/2 // avoid overflow when computing h
 		/*
 		似乎搞清了这里取出来的是什么东西了。
-		358=[16]uint32
+		358=[16]uint32 大于等于s
 		537=[]strconv.leftCheat
-		448=[8192]uint16
+		448=[8192]uint16 大于等于s
 		493=[][32]*runtime._defer
-		471=[8]uint32
-		482=[]*runtime._type
-		488=[]*runtime.mspan
-		491=[]*runtime.timer
+		471=[8]uint32 大于等于s
+		482=[]*runtime._type 大于等于s
+		488=[]*runtime.mspan 大于等于s
+		491=[]*runtime.timer 大于等于s
 		492=[]*sync.Pool
+		然而我还是不明白这是什么意思
 		*/
 		if !(rtypeOff(section, offs[h]).String() >= s) { //rtypeOff()方法是做了地址的偏移
 			i = h + 1 // preserves f(i-1) == false
@@ -200,12 +201,17 @@ for offsI, offs := range offset {
 			j = h // preserves f(j) == true
 		}
 	}
+	//最后i与j均为492，小于716（len），继续做加法，难道要做300多次？
 	for j := i; j < len(offs); j++ {
 		typ := rtypeOff(section, offs[j])
-		if typ.String() != s {
+		if typ.String() != s {//typ.string()为[]*sync.Pool,与s不相等，直接退出（break）
 			break
 		}
+		//ret是一个[]*rtype，存放切片的，把这里的[]*sync.Pool存进去然后返回。
 		ret = append(ret, typ)
 	}
 }
+return ret
 ```
+
+看完了，感觉非常晕，也完全没有看懂，事实上最后返回的ret也是一个空的定义。  
