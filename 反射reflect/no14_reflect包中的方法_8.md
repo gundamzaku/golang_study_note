@@ -17,3 +17,9 @@ func main()  {
 }
 ```
 比reflect的方法要简单得多得多了。有什么区别呢？不过很可惜，这个make()也是不透明的。我们看不到具体的方法。  
+
+好了，到这些我不得不再做一次对reflect.MakeSlice()和reflect.SliceOf()的回顾。  
+有很多不理解的地方  
+1、写入到集合，当然，这也可能是所有的slice对象都要被集合托管？
+2、typelinks()的机制，似乎与rsyn.pool有关系。
+3、newName()这个方法，我仍然还未有解读。
