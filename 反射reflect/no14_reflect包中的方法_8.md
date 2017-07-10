@@ -215,14 +215,22 @@ func main() {
 最后总结，就是生成一个变量的一段特定字节格式，对于name的描述，最好的解释还是只能看文档注释。  
 ```
 // name is an encoded type name with optional extra data.
+name是一种编码类型名称和一些非强制的扩展数据
 //
 // The first byte is a bit field containing:
+第一个byte是bit字段包含
 //
 //	1<<0 the name is exported
+	1这个名字已经被输出
 //	1<<1 tag data follows the name
+	2标签数据跟着名字
 //	1<<2 pkgPath nameOff follows the name and tag
+	4pkgPath nameOff跟着名字和标签后面
+	
+	好吧……完全不明白啊
 //
 // The next two bytes are the data length:
+
 //
 //	 l := uint16(data[1])<<8 | uint16(data[2])
 //
