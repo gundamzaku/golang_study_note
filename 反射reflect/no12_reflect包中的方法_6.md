@@ -37,3 +37,100 @@ slice: 151
 boolen: 129  
 应该都是它们特定的标志。  
 
+基本上，到这里应该有个定论，就是所有的变量都可以重定义为interface{}类型，而所有的变量，都可以转成Value类型。
+
+复习完这些知识以后，我们继续我们的代码之旅……  
+
+趁热打铁，我将目标盯上了reflect.MakeSlice()这个方法，其实在reflect里面，带Make字眼的方法一共有四个。
+```go
+reflect.MakeSlice()
+reflect.MakeChan()
+reflect.MakeFunc()
+reflect.MakeMap()
+```
+
+既然是叫Make了，那肯定就是制造/创建，Slice是Go的切片，Chan是Go的管道，Func是Go的方法，Map是Go的集合。  
+其实看字面的意思我们已经可以知道这四个方法是干什么用的了，但是具体是怎么用的呢？先从reflect.MakeSlice()看起吧。  
+
+先看方法：  
+```go
+func MakeSlice(typ Type, len, cap int) Value {
+	if typ.Kind() != Slice {
+		panic("reflect.MakeSlice of non-slice type")
+	}
+	if len < 0 {
+		panic("reflect.MakeSlice: negative len")
+	}
+	if cap < 0 {
+		panic("reflect.MakeSlice: negative cap")
+	}
+	if len > cap {
+		panic("reflect.MakeSlice: len > cap")
+	}
+
+	s := sliceHeader{unsafe_NewArray(typ.Elem().(*rtype), cap), len, cap}
+	return Value{typ.common(), unsafe.Pointer(&s), flagIndir | flag(Slice)}
+}
+```
+
+抛去前面的验证，下面的两个调用的方法我们在之前的reflect.AppendSlice()里面已经全部接触过了，都不难理解。这里让我们传入三个参数`typ Type, len, cap int`
+
+len是长度，cap是容量，都是int类型。比较费解的是这个typ，是Type对象。Type对象可是在type.go文件里面的一个类，具体我要怎么把它生成出来？  
+似乎也不难，只要`var typ = new(reflect.Type)`一下不就可以了？  
+好像一切都很简单一样，于是我试着用这个方式去MakeSlice一下。  
+```go
+func main()  {
+
+	var typ = new(reflect.Type)
+	mySlice := reflect.MakeSlice(typ,10,5)
+	fmt.Println(mySlice)
+}
+
+result:
+cannot use typ (type *reflect.Type) as type reflect.Type in argument to reflect.MakeSlice:
+*reflect.Type is pointer to interface, not interface
+```
+
+果然没有这么一帆风顺的事情，看错误的提示，似乎和指针有关系。  
+我用`fmt.Println(reflect.TypeOf(typ))`打印了一下，果然是`*reflect.Type`类型，而非是方法传递指明要用的Type类型。那怎么解决？  
+
+我在网上找到了一种方案：  
+```go
+type s struct {
+
+}
+
+func main()  {
+	sc := reflect.SliceOf(reflect.TypeOf(&s{}))
+	fmt.Println(sc)
+
+	mySlice := reflect.MakeSlice(sc,5,10)
+	fmt.Println(mySlice)
+}
+
+result:
+*main.s
+[]*main.s
+[<nil> <nil> <nil> <nil> <nil>]
+```
+可以看出，首先，要创建一个type（我怎么就没想到的。。）,然后用reflect.TypeOf(&s{})转换成Value，然后再用reflect.SliceOf(X)转换，最后就变成了可以传入reflect.MakeSlice()的参数。  
+
+这里有几点困惑的地方，首先，为什么要传入引用（&s[]）；其次，为什么要用reflect.TypeOf()，再次，为什么要用reflect.SliceOf()  
+
+其实我不传引用，这段程序同样可以执行。  
+```go
+func main()  {
+
+	sb := reflect.TypeOf(s{})
+	fmt.Println(sb)
+	sc := reflect.SliceOf(sb)
+	fmt.Println(sc)
+
+	mySlice := reflect.MakeSlice(sc,5,10)
+	fmt.Println(mySlice)
+}
+result:
+main.s
+[]main.s
+[{} {} {} {} {}]
+```
