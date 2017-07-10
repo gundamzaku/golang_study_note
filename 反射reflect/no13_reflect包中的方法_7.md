@@ -215,3 +215,42 @@ return ret
 ```
 
 看完了，感觉非常晕，也完全没有看懂，事实上最后返回的ret也是一个空的定义。  
+所以在`func SliceOf(t Type) Type {}`中这整个一段都没有执行。
+```go
+for _, tt := range typesByString(s) {
+	slice := (*sliceType)(unsafe.Pointer(tt))
+	if slice.elem == typ {
+		return cachePut(ckey, tt)
+	}
+}
+```	
+我在目前为止，可能还是无法完全理解这其中所包含的原理，不过从上面打出的sync.Pool来看，有可能和Go的pool包有关系。  
+
+`Go 1.3 的sync包中加入一个新特性：Pool。这个类设计的目的是用来保存和复用临时对象，以减少内存分配，降低CG压力。`
+更多的解释  
+```
+我们可以把sync.Pool类型值看作是存放可被重复使用的值的容器。此类容器是自动伸缩的、高效的，同时也是并发安全的。为了描述方便，我们也会把sync.Pool类型的值称为临时对象池，而把存于其中的值称为对象值。
+```
+在此处先做一个引申，暂且跳过，或许在不久的学习过程中，就会重新碰到并了解其实际的应用价值。  
+
+还是回到原来的方法。  
+
+```go
+// Make a slice type.
+//产生一个空的指针？
+var islice interface{} = ([]unsafe.Pointer)(nil)
+//然后把这个指针声明成slice类型
+prototype := *(**sliceType)(unsafe.Pointer(&islice))
+slice := *prototype//分配给slice?
+slice.tflag = 0
+//先是newName()，再是resolveReflectName(),都是相当重的方法，很难理解。
+slice.str = resolveReflectName(newName(s, "", "", false))
+//用了一种fnv1的hash生成方式
+//FNV能快速hash大量数据并保持较小的冲突率，它的高度分散使它适用于hash一些非常相近的字符串，比如URL，hostname，文件名，text，IP地址等。
+slice.hash = fnv1(typ.hash, '[')
+slice.elem = typ
+slice.ptrToThis = 0
+```
+真是没想到创建一个变量需要这么多的操作和内容，呼呼，就此打住了。如果深入下去真的没有底了。  
+最后`return cachePut(ckey, &slice.rtype)`先存入缓存，再返回。(记得解锁）  
+到这里，reflect.sliceOf()算是完了，可是我对这个方法的具体流程仍然处于一知半解的状态，非常遗憾。  
