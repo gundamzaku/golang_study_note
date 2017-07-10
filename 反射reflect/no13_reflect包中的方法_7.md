@@ -101,3 +101,55 @@ if slice := cacheGet(ckey); slice != nil {
 `s := "[]" + typ.String()`，硬拼出一个字符串，果然够霸道，也就是说我前面传入的string类型，这里转为字符串，然后前面再加上"[]"，就凑成了一个"[]string"的字符串了。  
 
 调用typesByString()方法，又是一个较长的方法，先看一下实现了什么吧。
+
+`for _, tt := range typesByString(s) {}`
+
+`*range 用来遍历数组和切片的时候返回索引和元素值`
+
+英文盲强行再看注释
+```
+// typesByString returns the subslice of typelinks() whose elements have
+// the given string representation.
+typesByString返回typelinks()的子切片？若这个元素具有给定的字符串表示
+// It may be empty (no known types with that string) or may have
+// multiple elements (multiple types with that string).
+它可能为空（那个字符串具有未知类型）或为多个元素（那个字符串具有多类型）
+```
+好吧，看不懂。。 先看看我的sb传进去是什么结果。  
+[1/1]0xc042004030  
+好像是意味着只有一个元素。  
+
+先看一下typesByString()方法中的第一行`sections, offset := typelinks()`  
+typelinks()，完了，又是一个在go代码里面找不到的内置方法  
+只能看注释：  
+```go
+// typelinks is implemented in package runtime.
+在runtime包中实现（奇怪，我怎么没找到，难道是func typelinksinit() {}方法？）
+// It returns a slice of the sections in each module,
+返回切片，基于每个模块的部件
+// and a slice of *rtype offsets in each module.
+和每个模块的rtype地址
+//
+// The types in each module are sorted by string. That is, the first
+每个模块的类型被存成字符
+// two linked types of the first module are:
+//
+//	d0 := sections[0]
+//	t1 := (*rtype)(add(d0, offset[0][0]))
+//	t2 := (*rtype)(add(d0, offset[0][1]))
+//
+// and
+//
+//	t1.String() < t2.String()
+//
+得，这个例子看得我一脸懵逼
+// Note that strings are not unique identifiers for types:
+// there can be more than one with a given string.
+// Only types we might want to look up are included:
+// pointers, channels, maps, slices, and arrays.
+func typelinks() (sections []unsafe.Pointer, offset [][]int32)
+```
+
+好吧，我表示看了也是白看，还不如想想到底是怎么实现的吧。
+typelinks返回的是一个无类型的sections地址，一个int32的多维数组。我多写几种例子来测一下有什么区别吧。  
+
