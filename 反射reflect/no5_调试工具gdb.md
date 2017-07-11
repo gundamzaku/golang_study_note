@@ -5,7 +5,8 @@
 
 那么我就按他的步骤来看一下这个gdb到底是什么样的用法吧。
 
-首先，要安装gdb，这个就自行解决了。
+首先，要安装gdb，这个就自行解决了。  
+windows里面的话，安装MinGW，然后将bin目录添加到环境变量Path中去。  
 
 接着，就要
 `Pass the '-w' flag to the linker to omit the debug information`
@@ -48,6 +49,8 @@ hello_test.go	main.go		regexp		src.test
 ```
 目录中必须带有test测试文件。  
 然后执行go test -c 产生一个src.text文件
+
+也可以不用，直接用go build -gcflags "-N -l" -o regex gdb.go  
 
 ### 启动
 gdb src.test
