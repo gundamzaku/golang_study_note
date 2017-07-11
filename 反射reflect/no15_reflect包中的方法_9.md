@@ -53,20 +53,24 @@ func main()  {
 
 	rs:=reflect.TypeOf(val)
 	n:= rs.Info()
-	b := (*[20]byte)(unsafe.Pointer(n.Info()))
+	b := (*[9]byte)(unsafe.Pointer(n.Info()))
 	for _, v := range b {
 		fmt.Println(string(v))
 	}
 
 }
 ```
-`b := (*[20]byte)(unsafe.Pointer(n.Info()))`是为了拿到完整个的字节，否则只能拿到指针的头，因为Go不支持指针位移，所以暂时只能用这个方式取值。  
+`b := (*[9]byte)(unsafe.Pointer(n.Info()))`是为了拿到完整个的字节，否则只能拿到指针的头，因为Go不支持指针位移，所以暂时只能用这个方式取值。  
 打印出来的结果是：  
-b=`&[0 0 7 42 115 116 114 105 110 103 0 0 7 42 117 105 110 116 49 54]`
+b=`&[0 0 7 42 115 116 114 105 110 103]`
 让我们对照着之前的newName()方法来看，第一位是b[0]是根据exported、lan(tag)和pkgPath来生成的。  
 目前三个位数都不存在，所以为0。  
 
-b[1] = uint8(len(val) >> 8)，最后得出来还是0，虽然不知道这段的意思。
+`*n is string`
 
-b[2] = b[2] = uint8(len(val))
+b[1] = uint8(len(n) >> 8)，最后得出来还是0，虽然不知道这段的意思。
+
+b[2] = uint8(len(n))
+这里是7，实际上送进去的类型等于`*string`，正好7位  
+后面的[b3:]-9是英文的描述，我们用string()转义一下可以看到，正好是`*string`  
 
