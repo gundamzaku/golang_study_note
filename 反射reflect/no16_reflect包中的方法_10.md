@@ -218,3 +218,8 @@ func (v Value) assignTo(context string, dst *rtype, target unsafe.Pointer) Value
 	panic(context + ": value of type " + v.typ.String() + " is not assignable to type " + dst.String())
 }
 ```
+通俗地来说，就是分别将key,value两个变量指派到map中的key和emu里面去，并且最终用  
+```go
+mapassign(v.typ, v.pointer(), k, e)
+```
+把他们串起来。我们可以在rungime包中的hashmap.go里面找到同名的方法，也许正是由它实现了具体的操作。
