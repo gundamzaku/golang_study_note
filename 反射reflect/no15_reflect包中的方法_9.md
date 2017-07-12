@@ -74,3 +74,33 @@ b[2] = uint8(len(n))
 这里是7，实际上送进去的类型等于`*string`，正好7位  
 后面的[b3:]-9是英文的描述，我们用string()转义一下可以看到，正好是`*string`  
 
+这就是对之前newName()的知识的一些补充，可是有几个问题仍然悬而未解，`tag, pkgPath, exported`到底是什么意思？  
+实现上我模拟了好几个变量定义，最后的结果b[0]均是0，完全没有突破。  
+失之东隅，收之桑榆，尽管在变量的声明上面没有找到发现，不过在type struce{}定义中，我们可以看到tag和pkgPath的意思。  
+```go
+package main
+
+import (
+	"reflect"
+	"fmt"
+)
+
+func main()  {
+	s := struct{
+		name string "this is tags"
+	}{"dan"}
+
+	t := reflect.TypeOf(s)
+	fmt.Printf("Name: %q, PkgPath: %q\n", t.Name(), t.PkgPath())
+	fmt.Printf("Name: %q, PkgPath: %q, Tag: %q\n", t.Field(0).Name, t.Field(0).PkgPath, t.Field(0).Tag)
+}
+
+result:
+Name: "", PkgPath: ""
+Name: "name", PkgPath: "main", Tag: "this is tags"
+```
+
+可以看到，在分析结构体内部的变量的时候，tags是对变量的标签(注：似乎只有结构体里的变量有这个属性)，而pkgPath则是这个变量对应在哪个包的包名。  
+可惜的是，我没有办法用我之前的办法，把这两个定义在字体中体现出来。这也许是结构体特有的属性，exported根据字面上的意思，结果现在的包的变量有大小写的区别，首字大写的变量方法才有可能被其它的包引用，而小写的变量方法则是私有的。我想，可能exported就和这个有关系吧。  
+
+话休絮烦，这一块的内容就打此为此了，暂时我也无法再深入下去，或许将来的某一天，我还会再次碰到。
