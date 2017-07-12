@@ -54,3 +54,24 @@ hello_test.go	main.go		regexp		src.test
 
 ### 启动
 gdb src.test
+
+## 更新
+GDB我已经弃用，改用derekparker/delve，太棒了，强推！
+
+用法，可见地址  
+https://github.com/derekparker/delve/
+
+安装以后加入环境变量，然后dlv便可启动命令，如：dlv debug xxx.go  
+之后进入(dlv)命令行
+
+如果你要设置断点，可用命令：b xxx.go:行数  
+然后有下例若干简单命令：  
+```
+(dlv) bp   #查看当前所有断点
+(dlv) c    #运行到下一个断点或者程序结尾
+(dlv) p a  #打印变量 a 的值
+(dlv) n    #单步执行代码
+(dlv) set a=1  #设置变量a 的值
+```
+
+更多的命令可以执行(dlv)help查看。
