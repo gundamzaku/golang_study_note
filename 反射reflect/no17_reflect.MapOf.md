@@ -180,3 +180,30 @@ mt.needkeyupdate = needKeyUpdate(ktyp)
 +mt.ptrToThis = 0
 -slice.ptrToThis = 0
 ```
+
+对比一下还是有不少差异的，主要是在于map有一个bucket的概念。
+看注释：
+```go
+A bucket is at most bucketSize*(1+maxKeySize+maxValSize)+2*ptrSize bytes,
+bucket最多为bucketSize*(1+maxKeySize+maxValSize)+2*ptrSize bytes
+or 2072 bytes, or 259 pointer-size words, or 33 bytes of pointer bitmap.
+或者2072 bytes，或是259大小指针的字（？）或者33指针位图的bytes（？）
+Normally the enforced limit on pointer maps is 16 bytes,
+一般被强制限制在map指针的话是16bytes。
+```
+`mt.bucket = bucketOf(ktyp, etyp)`就是一个新的xxOf()方法，意在划分一个新的空间给mt.bucket。  
+然后ktyp.size和etyp.size都要控制在一个常量范围之内。
+可以在配置中看到对大小的定义：
+```go
+bucketSize uintptr = 8
+maxKeySize uintptr = 128
+maxValSize uintptr = 128
+```
+具体的作用不明确。在我的代码中，可以打印出ktyp.size和etyp.size均为16。  
+而我将类型转成整型的时候`val:=reflect.MapOf(reflect.TypeOf(1),reflect.TypeOf(2))`，打出来的size便成了8。可见，这个是类型的位数的定义。  
+比如用`reflect.TypeOf(int32(1))`,size就成了4；用reflect.TypeOf(int64(1)),size就成了8,可见，如果不定义int的话，默认会调成Int64。  
+看样子，想超出128位的可能性也非常的小。  
+
+最后，拼成一个Map的类型，写入缓存，丢给调用的程序。
+
+怎么样，有没有听懂？其实我写的人也没写明白，你就当是你现在买了套房，他把毛坯房造好，钥匙给你，剩下的你就准备入住吧。至于他是怎么造得房子，你需要懂吗？
