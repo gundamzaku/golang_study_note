@@ -145,4 +145,77 @@ flagEmbedRO     flag = 1 << 6
 flagRO          flag = flagStickyRO | flagEmbedRO
 表示看不懂@_@
 ```
+```go
+tt := (*mapType)(unsafe.Pointer(v.typ))
+```
+将对象v的typ地址强行转换成了mapType：
 
+```go
+type mapType struct {
+	rtype         `reflect:"map"`
+	key           *rtype // map key type
+	elem          *rtype // map element (value) type
+	bucket        *rtype // internal bucket structure
+	hmap          *rtype // internal map header
+	keysize       uint8  // size of key slot
+	indirectkey   uint8  // store ptr to key instead of key itself
+	valuesize     uint8  // size of value slot
+	indirectvalue uint8  // store ptr to value instead of value itself
+	bucketsize    uint16 // size of bucket
+	reflexivekey  bool   // true if k==k for all keys
+	needkeyupdate bool   // true if we need to update key on an overwrite
+}
+```
+
+key和val是执行的一样的步骤，先要assignTo()  
+key是`key = key.assignTo("reflect.Value.SetMapIndex", tt.key, nil)`
+val是`val = val.assignTo("reflect.Value.SetMapIndex", tt.elem, nil)`
+
+两个相同的方法，一个是传入tt.key，一个是传入tt.elem，可以参考前面的说明：
+```
+key           *rtype // map key type
+elem          *rtype // map element (value) type
+```
+一个是代表了这个map的key，一个是代表了这个map的value。
+
+接着，看一下assignTo()是干嘛的吧
+```go
+func (v Value) assignTo(context string, dst *rtype, target unsafe.Pointer) Value {
+	//v.flag代表152,flagMethod代表512，两者的与运算是0，makeMethodValue就跳过了。
+	//还好跳过了，不然又要看不懂了。
+	if v.flag&flagMethod != 0 {
+		v = makeMethodValue(context, v)
+	}
+
+	switch {//switch怎么没有结果只有条件？条件下放到了case里面了
+	case directlyAssignable(dst, v.typ):	//这个条件为true
+		//这个方法就是拿key和我生成的那个map(就是最外面声明的m)进行一下对比。
+		//dst=最外面的那个m->typ(已经转换成maptype)->key
+		//v.typ就是传入的key->typ
+		//在directlyAssignable()里面，就是对比了这两个值并发现相等就直接返回了True
+		// Overwrite type so that they match.
+		// Same memory layout, so no harm done.
+		v.typ = dst//既然相等了，为什么还要赋值？
+		fl := v.flag & (flagRO | flagAddr | flagIndir)
+		fl |= flag(dst.Kind())
+		//重新定义了flag，并且返回
+		return Value{dst, v.ptr, fl}
+
+	case implements(dst, v.typ)://这个条件为false，不执行
+		if target == nil {
+			target = unsafe_New(dst)
+		}
+		x := valueInterface(v, false)
+		if dst.NumMethod() == 0 {
+			*(*interface{})(target) = x
+		} else {
+			ifaceE2I(dst, x, target)
+		}
+		return Value{dst, target, flagIndir | flag(Interface)}
+	}
+
+	// Failed.
+	panic(context + ": value of type " + v.typ.String() + " is not assignable to type " + dst.String())
+}
+```
+flagMethod      flag = 1 << 9
