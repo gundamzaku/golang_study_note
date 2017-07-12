@@ -142,15 +142,23 @@ key:int,val:string
 cache不存在的时候，那么开始生成`s := "map[" + ktyp.String() + "]" + etyp.String()`  
 后面的方法和前面讲的大抵上都雷同，主要是指流程上面。细节还是有不一样的。我可以对比一下早先看过的SliceOf()  
 
-```go
-+// Make a map type. -// Make a slice type.
-var imap interface{} = (map[unsafe.Pointer]unsafe.Pointer)(nil)
-mt := **(**mapType)(unsafe.Pointer(&imap))
-mt.str = resolveReflectName(newName(s, "", "", false))
-mt.tflag = 0
-mt.hash = fnv1(etyp.hash, 'm', byte(ktyp.hash>>24), byte(ktyp.hash>>16), byte(ktyp.hash>>8), byte(ktyp.hash))
+```diff
++// Make a map type. 
+-// Make a slice type.
++var imap interface{} = (map[unsafe.Pointer]unsafe.Pointer)(nil)
+-var islice interface{} = ([]unsafe.Pointer)(nil)
++mt := **(**mapType)(unsafe.Pointer(&imap))
+-prototype := *(**sliceType)(unsafe.Pointer(&islice))
++mt.str = resolveReflectName(newName(s, "", "", false))
+-slice := *prototype
++mt.tflag = 0
+-slice.tflag = 0
+-slice.str = resolveReflectName(newName(s, "", "", false))
++mt.hash = fnv1(etyp.hash, 'm', byte(ktyp.hash>>24), byte(ktyp.hash>>16), byte(ktyp.hash>>8), byte(ktyp.hash))
+-slice.hash = fnv1(typ.hash, '[')
 mt.key = ktyp
-mt.elem = etyp
++mt.elem = etyp
+-slice.elem = typ
 mt.bucket = bucketOf(ktyp, etyp)
 if ktyp.size > maxKeySize {
 	mt.keysize = uint8(ptrSize)
@@ -169,17 +177,6 @@ if etyp.size > maxValSize {
 mt.bucketsize = uint16(mt.bucket.size)
 mt.reflexivekey = isReflexive(ktyp)
 mt.needkeyupdate = needKeyUpdate(ktyp)
-mt.ptrToThis = 0
-```
-SliceOf()
-```go
-
-var islice interface{} = ([]unsafe.Pointer)(nil)
-prototype := *(**sliceType)(unsafe.Pointer(&islice))
-slice := *prototype
-slice.tflag = 0
-slice.str = resolveReflectName(newName(s, "", "", false))
-slice.hash = fnv1(typ.hash, '[')
-slice.elem = typ
-slice.ptrToThis = 0
++mt.ptrToThis = 0
+-slice.ptrToThis = 0
 ```
