@@ -1,3 +1,5 @@
+## type Pointer *ArbitraryType
+
 在go的reflect里面，我看到很多地方都用了unsafe.point方法，那么，这个unsafe.point到底是什么用处呢？  
 首先，我查看了一下unsafe包的源码，可惜里面除了声明，并没有实现的方法。  
 在声明中有注释：  
