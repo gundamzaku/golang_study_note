@@ -1,3 +1,5 @@
+## func MakeSlice(typ Type, len, cap int) Value {}
+
 前面不知不觉又说了一大堆的废话，忘记了初心了。  
 
 我们要确定的一点是，Value()这是一个对象，这个对象有很多关于变量属性的信息。这个对象是通过reflact.valueof()方法来产生的，并且不会对原值造成影响，只是追加了一个flag。
