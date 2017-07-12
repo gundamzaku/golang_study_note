@@ -1,4 +1,4 @@
-### reflect.MapOf(key, elem Type) Type {}
+## reflect.MapOf(key, elem Type) Type {}
 
 传入key,elem，均为Type类型，返回一个Type类型。
 
