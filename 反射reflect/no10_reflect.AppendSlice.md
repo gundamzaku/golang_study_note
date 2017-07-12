@@ -1,3 +1,5 @@
+## func AppendSlice(s, t Value) Value {}
+
 学习完了reflect.Append()方法之后，其实我还有不少的问题。  
 首先一个问题就是，reflect.Append()是为一个切片添加内容，那我为什么不用原生的Slice切片来添加呢？原生的应该更简单吧。  
 
