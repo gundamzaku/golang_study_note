@@ -218,4 +218,3 @@ func (v Value) assignTo(context string, dst *rtype, target unsafe.Pointer) Value
 	panic(context + ": value of type " + v.typ.String() + " is not assignable to type " + dst.String())
 }
 ```
-flagMethod      flag = 1 << 9
