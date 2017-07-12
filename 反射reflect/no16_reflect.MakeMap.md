@@ -1,3 +1,5 @@
+## func MakeMap(typ Type) Value {}
+
 接下来，我们再看一个make方法：`func MakeMap(typ Type) Value {}`吧，看上去还是比较简单的。从名字上看，必然是生成一个map的集合了。  
 先写一个例子。  
 ```go
