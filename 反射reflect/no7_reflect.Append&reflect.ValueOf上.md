@@ -87,6 +87,8 @@ func main()  {
 从方法中可以看到我用了一个reflect.ValueOf()的方法，将切片类型做了转换，转成了reflect.Append()要求的value类型。  
 reflect.ValueOf()做了些什么？只能再到源代码中去翻。  
 
+## func ValueOf(i interface{}) Value {}
+
 在上面的那个方法中，我将slice变量传入reflect.ValueOf(),而在reflect.ValueOf()中，将slice转成了原始类型interface{} 
 
 `*一切类型都可以变成interface{}类型`
