@@ -1,4 +1,4 @@
-## unsafe_NewArray **私有方法
+## unsafe_NewArray *私有方法
 
 承接上一篇，再回到`unsafe_NewArray(typ.Elem().(*rtype), cap)`中来  
 unsafe_NewArray()这个方法在value.go中有声明  
