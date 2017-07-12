@@ -1,3 +1,5 @@
+## func Append(s Value, x ...Value) Value {}
+
 之前在reflect的tyoeof()方法上耗去了大量的时间，这让人有些沮丧。  
 
 让我们看看reflect包中一共有多少个方法呢？  
