@@ -52,3 +52,35 @@ type funcTypeFixed4 struct {
 ```
 这方法里的4，也有8，16，32……等等，一共也有6个结构定。  
 接下来，把`*ft = *prototype`将ft指到了*prototype上
+```go
+for _, in := range in {
+	t := in.(*rtype)
+	args = append(args, t)
+	hash = fnv1(hash, byte(t.hash>>24), byte(t.hash>>16), byte(t.hash>>8), byte(t.hash))
+}
+```
+遍历in，加到args里面去。  
+
+```go
+for _, out := range out {
+	t := out.(*rtype)
+	args = append(args, t)
+	hash = fnv1(hash, byte(t.hash>>24), byte(t.hash>>16), byte(t.hash>>8), byte(t.hash))
+}
+```
+遍历out，加到args里面去。  
+
+到这里，我突然发现我漏了一个参数。  
+```go
+if variadic {
+	hash = fnv1(hash, 'v')
+}
+```
+真是见鬼，在FuncOf(in, out []Type, variadic bool)里面，variadic是作为第三个参数传入的，可是他是什么意思呢？  
+看一下注释  
+```
+The variadic argument controls whether the function is variadic. 
+可变参数控制这个方法是不是可变。。。
+```
+废话，可我还是没弄懂你是干嘛的啊。。可变参数不就是那个...的写法？但是具体落地到哪个参数呢？先跳过  
+
