@@ -82,5 +82,107 @@ if variadic {
 The variadic argument controls whether the function is variadic. 
 可变参数控制这个方法是不是可变。。。
 ```
-废话，可我还是没弄懂你是干嘛的啊。。可变参数不就是那个...的写法？但是具体落地到哪个参数呢？先跳过  
+废话，可我还是没弄懂你是干嘛的啊。。  
+不如我还是先用代码做测试吧，最早的代码，我把
+```diff
+func main()  {
 
+	var s []reflect.Type
+	s=append(s,reflect.TypeOf("h"),reflect.TypeOf(1))
+	+rs:= reflect.FuncOf(s,s, false)
+	-rs:= reflect.FuncOf(s,s, true)
+	fmt.Println(rs)
+}
+
+result:
+panic: reflect.FuncOf: last arg of variadic func must be slice
+```
+直接报错，原因就出在源码的第一行验证上面  
+```go
+if variadic && (len(in) == 0 || in[len(in)-1].Kind() != Slice) {
+	panic("reflect.FuncOf: last arg of variadic func must be slice")
+}
+```
+`in[len(in)-1].Kind() != Slice`,现在打印出来的Kind()是2，Int类型，看样子是我传入的In有问题了。  
+动手改造一下。  
+```go
+func main()  {
+	var s []reflect.Type
+	var e []reflect.Type
+	var vr []string
+	s=append(s,reflect.TypeOf("h"),reflect.TypeOf(vr))
+	e=append(e,reflect.TypeOf("h"))
+	rs:= reflect.FuncOf(s,e,true)
+	fmt.Println(rs)
+}
+result:
+func(string, ...string) string
+```
+完美诠释了variadic的用法！  
+
+接着再回来funcOf上面，下一段  
+```go
+ft.tflag = 0
+ft.hash = hash
+ft.inCount = uint16(len(in))
+ft.outCount = uint16(len(out))
+if variadic {
+	ft.outCount |= 1 << 15
+}
+```
+
+这里就是函数内部的常规定义了，注意的是，variadic再次出现，并且这次明显是用来控制outCount的，如果是variadic为true的话，outCount的大小是……32769？似乎有点夸张。并且目前我也不知道他的具体用意。  
+
+再接下来，就是我们的老朋友funcLookupCache了，先上锁，现去查缓存。   
+```go
+funcLookupCache.RLock()
+for _, t := range funcLookupCache.m[hash] {
+	if haveIdenticalUnderlyingType(&ft.rtype, t, true) {
+		funcLookupCache.RUnlock()
+		return t
+	}
+}
+funcLookupCache.RUnlock()
+```
+很显然，第一次没有。
+
+没有缓存，再跑一次  
+```go
+// Not in cache, lock and retry.
+funcLookupCache.Lock()
+defer funcLookupCache.Unlock()
+if funcLookupCache.m == nil {//肯定是空的
+	funcLookupCache.m = make(map[uint32][]*rtype)
+}
+for _, t := range funcLookupCache.m[hash] {
+	if haveIdenticalUnderlyingType(&ft.rtype, t, true) {
+		return t
+	}
+}
+```
+```go
+str := funcStr(ft)
+```
+接成字符串，之前的xxOf都是直接手写的，这里估计太复杂了，就做成了一个函数，最后呈现在的结果以我的代码为主的话就是：func(string, ...string) string
+
+```go
+for _, tt := range typesByString(str) {
+	if haveIdenticalUnderlyingType(&ft.rtype, tt, true) {
+		funcLookupCache.m[hash] = append(funcLookupCache.m[hash], tt)
+		return tt
+	}
+}
+```
+可惜，typesByString(str)也拆不出相对应的类型出来，直接就是nil跳过了。  
+
+```go
+// Populate the remaining fields of ft and store in cache.
+ft.str = resolveReflectName(newName(str, "", "", false))
+ft.ptrToThis = 0
+funcLookupCache.m[hash] = append(funcLookupCache.m[hash], &ft.rtype)
+
+return &ft.rtype
+```
+
+最后，串成一个完整的函数类型的格式，并且写入缓存，返回。  
+看不懂没关系，知道大概怎么个流程就行了。
