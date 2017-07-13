@@ -51,4 +51,4 @@ type funcTypeFixed4 struct {
 }
 ```
 这方法里的4，也有8，16，32……等等，一共也有6个结构定。  
-接下来，把`*ft = *prototype`将ft指到了**prototype上
+接下来，把`*ft = *prototype`将ft指到了*prototype上
