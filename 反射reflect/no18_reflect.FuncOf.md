@@ -85,17 +85,17 @@ The variadic argument controls whether the function is variadic.
 废话，可我还是没弄懂你是干嘛的啊。。  
 不如我还是先用代码做测试吧，最早的代码，我把
 ```diff
-func main()  {
 
+func main()  {
 	var s []reflect.Type
 	s=append(s,reflect.TypeOf("h"),reflect.TypeOf(1))
 	+rs:= reflect.FuncOf(s,s, false)
 	-rs:= reflect.FuncOf(s,s, true)
 	fmt.Println(rs)
 }
-
 result:
 panic: reflect.FuncOf: last arg of variadic func must be slice
+
 ```
 直接报错，原因就出在源码的第一行验证上面  
 ```go
