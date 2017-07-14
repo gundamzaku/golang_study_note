@@ -162,3 +162,72 @@ desc: dan.liu
 ```
 
 成功了，如果我的逻辑成立的话，也就是说go xxx()这个方法，是需要我在外部自己实现的了。  
+
+接着，我多开几个线程做一下测试：
+```go
+
+func main()  {
+
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(3),tt)
+	fmt.Println(chanValue)
+
+	chs := reflect.MakeChan(chanValue,1024)
+	var i int32
+	for i = 0; i<=200; i++ {
+		go Sum(i,chs)
+	}
+	for i = 0; i<=200; i++ {
+		chs.Recv()
+	}
+}
+```
+同样没有什么问题。
+
+其实，除了v.send和v.recv以外，在v的主体中，还存在两个方法，v.trysend和v.tryrecv，这两个到底和普通的send、recv有什么区别？  
+```go
+func (v Value) TrySend(x Value) bool {
+	v.mustBe(Chan)
+	v.mustBeExported()
+	return v.send(x, true)
+}
+```
+```go
+func (v Value) Send(x Value) {
+	v.mustBe(Chan)
+	v.mustBeExported()
+	v.send(x, false)
+}
+```
+两个方法对比了一下，关键是在v.send()里面的true和false，原来这两个方法（首字母S大写）调的是内部的一个同名方法（首字母小写）。  
+而小写的send()需要我们额外传入一个bool的参数，和是否阻塞有关系。  
+
+追查下去，到
+```go
+func chansend(t *rtype, ch unsafe.Pointer, val unsafe.Pointer, nb bool) bool
+```
+这个方法在runtime包的chan.go中被实现，这里不谈源代码的全部，仅针对这一块看一下。  
+```
+ * If block is not nil,
+ * then the protocol will not
+ * sleep but return if it could
+ * not complete.
+ ```
+ 注释中写道，如果这个block（即nb）不为nil，那么这个协议将不会睡眠如果他还没有完全返回数据。  
+ 看代码吧，如果是在block为true的情况下，会执行  
+ ```go
+ gopark(nil, nil, "chan send (nil chan)", traceEvGoStop, 2)
+ 
+ func gopark(unlockf func(*g, unsafe.Pointer) bool, lock unsafe.Pointer, reason string, traceEv byte, traceskip int) {}
+ ```
+ 这么一段代码，看注释  
+ ```go
+// Puts the current goroutine into a waiting state and calls unlockf.
+// If unlockf returns false, the goroutine is resumed.
+// unlockf must not access this G's stack, as it may be moved between
+// the call to gopark and the call to unlockf.
+```
+
+不行了，翻译不过来了。只是隐约看到放置一个当前的go协程放等候的状态，并且呼叫unlockf。如果unlockf这个方法返回false，这个go协程会恢复，unlockf必须不能访问G栈，它可以在调用gopark和调用unlockf之间移动？
+
+看不懂，算了。还是回过去想想这个block到底是怎么个用法吧。  
