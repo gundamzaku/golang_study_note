@@ -125,3 +125,40 @@ fatal error: all goroutines are asleep - deadlock!
 ```
 把1改成3即正常。  
 
+接下来问题来了，我拿并发不仅仅是做发送和接收的事情吧，比如……我想写个复杂一点的方法怎么办？可惜，找遍了网上都没有找到实现的方法，只好自己发挥想象力了。我原来的程序实现了发送和接受的两种行为。那么我把原生的方法稍微改一下能不能用呢？  
+```go
+func Sum(val string,ch chan int){
+	fmt.Println("desc:",val)
+	ch <- 1//这里是发送，是不是等同于前面的v.Send呢？
+}
+func main()  {
+	chs := make(chan int)
+	go Sum("dan.liu",chs)
+	<-chs//这里是接受，是不是等同于前面的v.recv呢？
+}
+```
+
+不如改写一下试试看吧。  
+```go
+type T string
+
+func Sum(val string,chs reflect.Value){
+	fmt.Println("desc:",val)
+	chs.Send(reflect.ValueOf(T("hello one")))
+}
+func main()  {
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(3),tt)
+	fmt.Println(chanValue)
+
+	chs := reflect.MakeChan(chanValue,1)
+	go Sum("dan.liu",chs)
+	chs.Recv()
+
+}
+result:
+chan main.T
+desc: dan.liu
+```
+
+成功了，如果我的逻辑成立的话，也就是说go xxx()这个方法，是需要我在外部自己实现的了。  
