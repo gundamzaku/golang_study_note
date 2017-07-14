@@ -231,3 +231,31 @@ func chansend(t *rtype, ch unsafe.Pointer, val unsafe.Pointer, nb bool) bool
 不行了，翻译不过来了。只是隐约看到放置一个当前的go协程放等候的状态，并且呼叫unlockf。如果unlockf这个方法返回false，这个go协程会恢复，unlockf必须不能访问G栈，它可以在调用gopark和调用unlockf之间移动？
 
 看不懂，算了。还是回过去想想这个block到底是怎么个用法吧。  
+
+一开始我仅仅是做了一下简单的替换，把Send换成TrySend，把recv换成了TryRecv，运行了一下，没有任何问题，看样子是要换一些极端的情况。  
+
+比如我把chs.Recv()去掉，除了数据显示不出来，不管用哪种Send数据都没有什么异常。
+接着我又把chs.Sendf去掉，用chs.Recv()的时候，数据是有的，但也报错了。  
+```
+desc: dan.liu
+fatal error: all goroutines are asleep - deadlock!
+```
+所有的协程都睡着了！死锁！
+
+于是我换成chs.TryRecv()，没报错，不过数据也没显示。看这样子是当中进行了一些异常的判断。  
+
+我再试一下早先那个报错的代码  
+```go
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(3),tt)
+	v := reflect.MakeChan(chanValue, 1)
+
+	v.TrySend(reflect.ValueOf(T("hello one")))
+	v.TrySend(reflect.ValueOf(T("hello two")))
+	v.TrySend(reflect.ValueOf(T("hello three")))
+	sv, _ := v.Recv()
+	fmt.Println(sv)
+```
+事实上我改成了TrySend()以后，报错就没有了。看这样子，它的容错性非常高。  
+
+MakeChan的用法就看到这里了，channel是一块内容蛮多的模块，在线程中能讲的不过是九牛二毛罢了。
