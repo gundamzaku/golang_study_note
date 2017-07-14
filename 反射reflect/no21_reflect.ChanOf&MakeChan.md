@@ -334,3 +334,115 @@ cases = append(cases,reflect.SelectCase{
 `fatal error: all goroutines are asleep - deadlock!`  
 见鬼，怎么产生死锁了！  
 
+其实死锁的原因是我没有把`go Sum("dan.liu",chs)`跑起来，这个时候，我对代码重新做一下调整，把所有的代码都配对好，再试一次。  
+
+```go
+type T string
+
+func Sum(val string,chs reflect.Value){
+	fmt.Println("desc:",val)
+	chs.Send(reflect.ValueOf(T("hello one")))
+}
+func main()  {
+
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(3),tt)
+	fmt.Println(chanValue)
+
+	chs := reflect.MakeChan(chanValue,1)
+	go Sum("dan.liu",chs)
+	//chs.Recv()
+	var cases []reflect.SelectCase
+
+	cases = append(cases,reflect.SelectCase{
+		Dir:  reflect.SelectRecv,
+		Chan: chs,
+		//Send: reflect.ValueOf(2),
+	})
+
+
+	chosen, recv, recvOk := reflect.Select(cases)
+	if recvOk {
+		switch chosen {
+		case 0:
+			fmt.Println(chosen, recv.String())
+		}
+	}
+
+}
+result:
+chan main.T
+desc: dan.liu
+0 hello one
+```
+看，终于成功了！  
+
+松了口气，不过到这里，还要再理一下`chosen, recv, recvOk := reflect.Select(cases)`这段代码中返回参数的意思。  
+recvOk=true，告诉你这个方法是成功还是失败的，只有成功了，另外两个参数才有用处。  
+
+chosen代表启动的go xxx(),先启动的为0，依次便是1，2，3……
+比如我现在再开一个go run看一下。  
+```go
+type T string
+
+func Sum(val string,chs reflect.Value){
+	fmt.Println("desc:",val)
+	chs.Send(reflect.ValueOf(T("hello one")))
+}
+func Sum1(val string,chs reflect.Value){
+	fmt.Println("desc:",val)
+	chs.Send(reflect.ValueOf(T("hello two")))
+}
+func main()  {
+
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(3),tt)
+	fmt.Println(chanValue)
+
+	chs := reflect.MakeChan(chanValue,1)
+	chs1 := reflect.MakeChan(chanValue,1)
+	go Sum("dan.liu",chs)
+	go Sum1("dan.liu",chs1)
+	//chs.Recv()
+	var cases []reflect.SelectCase
+
+	cases = append(cases,reflect.SelectCase{
+		Dir:  reflect.SelectRecv,
+		Chan: chs,
+		//Send: reflect.ValueOf(2),
+	})
+	cases = append(cases,reflect.SelectCase{
+		Dir:  reflect.SelectRecv,
+		Chan: chs1,
+		//Send: reflect.ValueOf(2),
+	})
+	finished := 0
+	for finished < len(cases) {
+		finished++
+		chosen, recv, recvOk := reflect.Select(cases)
+		if recvOk {
+			fmt.Println("chosen",chosen)
+			switch chosen {
+			case 0:
+				fmt.Println(chosen, recv.String())
+			case 1:
+				fmt.Println(chosen, recv.String())
+			}
+
+		}
+	}
+
+}
+result:
+chan main.T
+desc: dan.liu
+desc: dan.liu
+chosen 0
+0 hello one
+chosen 1
+1 hello two
+```
+可以看到上面的`0 hello one`和`1 hello two`的对应。  
+
+最后，至于这个recv，更就好理解了。代码中其实已经有体现。  
+recv.String()，输入的正是Sum()函数中Send出来的变量，即`chs.Send(reflect.ValueOf(T("hello one")))`。
