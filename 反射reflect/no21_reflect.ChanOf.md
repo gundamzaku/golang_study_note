@@ -61,10 +61,67 @@ desc: dan.liu
 
 ```go
 func main()  {
-	type T *uintptr
-	tt := reflect.TypeOf(T(nil))
-	chanValue := reflect.ChanOf(reflect.ChanDir(RecvDir),tt)
+	type T string
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(1),tt)
 	fmt.Println(chanValue)
 }
+
+result:
+<-chan main.T
 ```
 似乎已经成功。
+接下来我再用MakeChan（）试一下。
+```go
+func main()  {
+	type T string
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(1),tt)
+	fmt.Println(chanValue)
+
+	v := reflect.MakeChan(chanValue, 1)
+	v.Send(reflect.ValueOf(T("hello")))
+	sv1, _ := v.Recv()
+	fmt.Println(sv1)
+
+}
+result:
+panic: reflect.MakeChan: unidirectional channel type
+```
+
+报错了……看源代码。
+```go
+if typ.ChanDir() != BothDir {
+	panic("reflect.MakeChan: unidirectional channel type")
+}
+```
+
+奇怪，原来Make的时候强行要BothDir才行（即值3），于是我将上面的值改成3，`chanValue := reflect.ChanOf(reflect.ChanDir(1),tt)`  
+再次运行  
+```go
+result:
+chan main.T
+hello
+```
+
+成功了。可以看到这样一个很简单的流程，创建一个channel，然后丢个数据过去（"hello"），又可以把数据recv回来。  
+功能是实现了，但怎么看上去不实用呢？另外后面那个`v := reflect.MakeChan(chanValue, 1)`中的1又是什么东西？  
+其实这个1看MakeChan()的定义
+```go
+func MakeChan(typ Type, buffer int) Value {}
+```
+是buffer的机制，buffer 1 表示能缓冲1个，超过了就会发生阻塞。做个实验：  
+```go
+v := reflect.MakeChan(chanValue, 1)
+
+v.Send(reflect.ValueOf(T("hello one")))
+v.Send(reflect.ValueOf(T("hello two")))
+v.Send(reflect.ValueOf(T("hello three")))
+sv, _ := v.Recv()
+fmt.Println(sv)
+
+result:
+fatal error: all goroutines are asleep - deadlock!
+```
+把1改成3即正常。  
+
