@@ -258,4 +258,79 @@ fatal error: all goroutines are asleep - deadlock!
 ```
 事实上我改成了TrySend()以后，报错就没有了。看这样子，它的容错性非常高。  
 
-MakeChan的用法就看到这里了，channel是一块内容蛮多的模块，在线程中能讲的不过是九牛二毛罢了。
+MakeChan的用法就看到这里了，channel是一块内容蛮多的模块，在线程中能讲的不过是九牛二毛罢了
+
+现在，我需要做的是把MakeChan和Select两个方法整合起来。承接之前的代码，我进行了一点调整。  
+
+```go
+type T string
+
+func Sum(val string,chs reflect.Value){
+	fmt.Println("desc:",val)
+	chs.Send(reflect.ValueOf(T("hello one")))
+}
+func main()  {
+
+	tt := reflect.TypeOf(T(""))
+	chanValue := reflect.ChanOf(reflect.ChanDir(3),tt)
+	fmt.Println(chanValue)
+
+	chs := reflect.MakeChan(chanValue,1)
+	//go Sum("dan.liu",chs)
+	//chs.Recv()
+	var cases []reflect.SelectCase
+
+	cases = append(cases,reflect.SelectCase{
+		Dir:  reflect.SelectRecv,
+		Chan: reflect.ValueOf(chs),
+		Send: reflect.ValueOf(2),
+	})
+	fmt.Println(cases)
+
+	c,r,ok := reflect.Select(cases)
+	fmt.Println(c)
+	fmt.Println(r)
+	fmt.Println(ok)
+
+}
+result:
+panic: reflect.Select: RecvDir case has Send value
+```
+结果并没有达到我想象中的效果，非常沮丧，又不知道问题出在哪里。折腾了老半天，还是老老实实地去看源代码。  
+在value.go的
+```go
+func Select(cases []SelectCase) (chosen int, recv Value, recvOK bool) {}
+```
+中定位到了问题所在。  
+```go
+case SelectRecv:
+	if c.Send.IsValid() {
+		panic("reflect.Select: RecvDir case has Send value")
+	}
+	ch := c.Chan
+	if !ch.IsValid() {
+		break
+	}
+	~~ch.mustBe(Chan)~~
+```
+ch是我们传进来的`Chan: reflect.ValueOf(chs),`仔细一看，傻比了，chs在`reflect.MakeChan(chanValue,1)`的时候已经被转成Value类型了，现在我又传了一次。
+
+我把这段变回成`Chan: chs`  
+
+可是又报了一个新的错：
+```
+panic:reflect.Select: RecvDir case has Send value
+```
+真是好事多磨。从字面的意思上，似乎是说我有一个Send value。  
+```go
+cases = append(cases,reflect.SelectCase{
+	Dir:  reflect.SelectRecv,
+	Chan: chs,
+	Send: reflect.ValueOf(2),
+})
+```
+那么把下面的~~Send: reflect.ValueOf(2)~~去掉，因为我的Dir是reflect.SelectRecv，并不需要Send啊。  
+去掉以后错误解除，但是……
+`fatal error: all goroutines are asleep - deadlock!`  
+见鬼，怎么产生死锁了！  
+
