@@ -97,3 +97,34 @@ string hello big clude hello big clude
 val := MakeSlice(typ, 0, cap)
 data := NewAt(ArrayOf(cap, typ), unsafe.Pointer(val.Pointer()))
 ```
+
+
+
+func main(){
+
+	type Ptr struct{ x *byte }
+	var Tptr = reflect.TypeOf(Ptr{})
+	typ:= reflect.SliceOf(Tptr)
+	//是一个指针类型的切片
+	val := reflect.MakeSlice(typ, 0, 0)
+	//fmt.Println(val.String())
+	ta:=reflect.ArrayOf(1, typ)
+	var tam = ta.Elem()
+	var t Ptr
+	fmt.Println(reflect.TypeOf(t))
+	fmt.Println(tam.Kind())
+
+	var tt []string
+	tt = append(tt,"h","e")
+	println(tt)
+	tam = append(tt,reflect.TypeOf(t))
+	//append(reflect.TypeOf(tam),reflect.TypeOf(t))
+	//tamm:=append(tam,t)
+	//fmt.Println(tamm)
+
+	fmt.Println(val)
+	//data := reflect.NewAt(reflect.ArrayOf(0, typ), unsafe.Pointer(val.Pointer()))
+	//data.Elem().Set(reflect.ValueOf(d))
+	//vs:= reflect.ValueOf("d")
+	//fmt.Println(unsafe.Pointer(&data))
+}
