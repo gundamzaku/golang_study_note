@@ -26,7 +26,63 @@ if array := cacheGet(ckey); array != nil {
 很容易可以看到这个cache的机制，同样的，他会以数组类型ID+要生成的数组类型（比如string）+生成的数组大小来创建一个key。
 ```
 
-确认缓存中不存在以后，他便会以Array的规则来Make一个Array出来，这段代码就不去理解了。  
+确认缓存中不存在以后，他便会以Array的规则来Make一个Array出来，这段代码就不去理解了。代码一拉到底，最后仍旧是  
+`return cachePut(ckey, &array.rtype)`的方法，将一个生成的数组Type返回。
 
-值得注意的是这里有一个常量的定义：`const maxPtrmaskBytes = 2048`，这代表了数组的最大长度是2048，那超过会怎么样？  
+不过这个返回的Type并非是一个Array类型，是不能直接拿来用的。  
 
+```go
+func main()  {
+	var t string
+	rs:= reflect.ArrayOf(2,reflect.TypeOf(t))
+	fmt.Println(rs.String())
+	rs[1] = "hello"
+}
+result:
+invalid operation: rs[1] (type reflect.Type does not support indexing)
+```
+
+我要使用他，就必须进行转换，在reflect包中，提供了这么一个转换的方法reflect.New()
+```go
+func main()  {
+
+	var t string
+
+	rs:= reflect.ArrayOf(2,reflect.TypeOf(t))
+
+	v := reflect.New(rs).Elem()
+	fmt.Println(v.String())
+
+	v.Index(1).Set(reflect.ValueOf("hello"))
+	fmt.Println(v)
+}
+```
+
+reflect.New()的方法非常简单  
+```go
+// New returns a Value representing a pointer to a new zero value
+// for the specified type. That is, the returned Value's Type is PtrTo(typ).
+func New(typ Type) Value {
+	if typ == nil {
+		panic("reflect: New(nil)")
+	}
+	ptr := unsafe_New(typ.(*rtype))
+	fl := flag(Ptr)
+	return Value{typ.common().ptrTo(), ptr, fl}
+}
+```
+主要是在调用了unsafe_New()这个方法上面。这个方法的具体实现是在runtime包的malloc.go之中。  
+```go
+//go:linkname reflect_unsafe_New reflect.unsafe_New
+func reflect_unsafe_New(typ *_type) unsafe.Pointer {
+	return newobject(typ)
+}
+```
+而newobject(typ)调用的又是下面这个方法。
+```go
+// Allocate an object of size bytes.
+// Small objects are allocated from the per-P cache's free lists.
+// Large objects (> 32 kB) are allocated straight from the heap.
+func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {}
+```
+看注释的意思是给对象分配一个比特大小的空间吧。小的对象从per-P缓存的空闲列中分配。大的目标（大于32KB）的则从heap中分配。  
