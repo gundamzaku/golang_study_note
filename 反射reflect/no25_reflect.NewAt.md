@@ -98,33 +98,45 @@ val := MakeSlice(typ, 0, cap)
 data := NewAt(ArrayOf(cap, typ), unsafe.Pointer(val.Pointer()))
 ```
 
+最后，我找到一个官方的例子，这个例子是从test的源码中抠出来的，现在将它整理了一下，或者能更好地说明NewAt()到底是个怎么样的用法。  
 
-
+```go
 func main(){
 
-	type Ptr struct{ x *byte }
+	type Ptr struct{
+		x string
+	}
+
 	var Tptr = reflect.TypeOf(Ptr{})
 	typ:= reflect.SliceOf(Tptr)
-	//是一个指针类型的切片
-	val := reflect.MakeSlice(typ, 0, 0)
-	//fmt.Println(val.String())
-	ta:=reflect.ArrayOf(1, typ)
-	var tam = ta.Elem()
-	var t Ptr
-	fmt.Println(reflect.TypeOf(t))
-	fmt.Println(tam.Kind())
+	val := reflect.MakeSlice(typ, 10, 10)
 
-	var tt []string
-	tt = append(tt,"h","e")
-	println(tt)
-	tam = append(tt,reflect.TypeOf(t))
-	//append(reflect.TypeOf(tam),reflect.TypeOf(t))
-	//tamm:=append(tam,t)
-	//fmt.Println(tamm)
+	var listp Ptr
+	listp.x = "hello"
+	var p []Ptr
+	p = append(p,listp)
+	fmt.Println(reflect.ValueOf(p).String())
 
-	fmt.Println(val)
-	//data := reflect.NewAt(reflect.ArrayOf(0, typ), unsafe.Pointer(val.Pointer()))
-	//data.Elem().Set(reflect.ValueOf(d))
-	//vs:= reflect.ValueOf("d")
-	//fmt.Println(unsafe.Pointer(&data))
+	data := reflect.NewAt(reflect.ArrayOf(10, typ), unsafe.Pointer(val.Pointer()))
+
+	var s []int
+	s = append(s,5,6)
+	data.Elem().Index(1).Set(reflect.ValueOf(p))
+	fmt.Println(data)
+	fmt.Println(data.Elem().Index(1))
+	fmt.Println(data.Elem().Index(1).Kind())
+	fmt.Println(data.Elem().Index(1).Index(0))
+	fmt.Println(data.Elem().Index(1).Index(0).FieldByName("x"))
 }
+
+result:
+<[]main.Ptr Value>
+&[[] [{hello}] [] [] [] [] [] [] [] []]
+[{hello}]
+slice
+{hello}
+hello
+```
+最关键的是`data := reflect.NewAt(reflect.ArrayOf(10, typ), unsafe.Pointer(val.Pointer()))`  
+data产生了一个指针，这个指针指到一个数组（reflect.ArrayOf(10, typ)），而数组里面放的又是一个slice变量，slice变量里面又放着是一个ptr的结构体。  
+绕了一圈。
