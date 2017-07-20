@@ -9,3 +9,25 @@ func PtrTo(t Type) Type {
 }
 ```
 看注释就明白，也就是你传个变量过来，它把这个变量变成了指针形式。  
+
+```go
+func main(){
+	var s string
+	s = "hello"
+
+	ns:=reflect.PtrTo(reflect.TypeOf(s))
+	fmt.Println(ns)
+
+	v:=reflect.New(ns)
+
+	var p *string
+	var val string = "hello"
+	p = &val
+
+	v.Elem().Set(reflect.ValueOf(p))
+	fmt.Println(*(*string)(unsafe.Pointer(v.Elem().Pointer())))
+}
+result:
+*string
+hello
+```
