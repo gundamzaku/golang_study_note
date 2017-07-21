@@ -44,6 +44,19 @@ pprof>>web
 可以生成视图并查看  
 
 其它的命令：
-list func(函数名），可以看到具体函数的执行顺序list。  
-weblist func(函数名），可以在浏览器上直接看，很直观。  
+list func(函数名），可以看到具体函数的执行顺序list。
 
+weblist func(函数名），可以在浏览器上直接看，很直观。 
+
+top5，可以看到负载最高的数据  
+```
+(pprof) top5
+360ms of 360ms total (  100%)
+Showing top 5 nodes out of 16 (cum >= 350ms)
+      flat  flat%   sum%        cum   cum%
+     330ms 91.67% 91.67%      330ms 91.67%  runtime.cgocall
+      10ms  2.78% 94.44%       10ms  2.78%  fmt.newPrinter
+      10ms  2.78% 97.22%       10ms  2.78%  runtime.mallocgc
+      10ms  2.78%   100%       10ms  2.78%  sync.(*Mutex).Unlock
+         0     0%   100%      350ms 97.22%  fmt.Fprintln
+```
