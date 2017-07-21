@@ -32,3 +32,32 @@ result:
 *string
 hello
 ```
+
+## func StructOf(fields []StructField) Type {}
+比起reflect.PtrTo（）来说，reflect.StructOf（）的源代码就很长了。  
+看注释的第一句话，就表达了它的功能  
+```go
+StructOf returns the struct type containing fields.
+也就是说，返回一个Struct类型。
+```
+
+由于源代码过长，这里也不打算去看他了（其实也是看不懂），先写一段代码了解一下它的功能，从传入参数来看，他是需要一个StructField类型的数组，这又是什么呢？  
+在源代码中有声明，其实这是一个结构体，有一个Name，就表示这个结构体的名称。  
+```go
+// A StructField describes a single field in a struct.
+type StructField struct {
+	// Name is the field name.
+	Name string
+	// PkgPath is the package path that qualifies a lower case (unexported)
+	// field name. It is empty for upper case (exported) field names.
+	// See https://golang.org/ref/spec#Uniqueness_of_identifiers
+	PkgPath string
+
+	Type      Type      // field type
+	Tag       StructTag // field tag string
+	Offset    uintptr   // offset within struct, in bytes
+	Index     []int     // index sequence for Type.FieldByIndex
+	Anonymous bool      // is an embedded field
+}
+```
+问题是我怎么产生这个结构体？  
