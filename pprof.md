@@ -22,3 +22,8 @@ go tool pprof reflect.exe reflect.prof
 
 pprof>>web  
 可以生成视图并查看  
+
+其它的命令：
+list func(函数名），可以看到具体函数的执行顺序list。  
+weblist func(函数名），可以在浏览器上直接看，很直观。  
+
