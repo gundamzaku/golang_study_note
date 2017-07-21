@@ -61,3 +61,57 @@ type StructField struct {
 }
 ```
 问题是我怎么产生这个结构体？  
+
+其实也不难，我照着上面的语句说明，直接生成不行么？  
+```go
+func main(){
+	var fields []reflect.StructField
+	fields = append(fields,reflect.StructField{
+		Name: "S",
+		Tag:  "s",
+		Type: reflect.TypeOf(""),
+	})
+
+	fields = append(fields,reflect.StructField{
+		Name: "X",
+		Tag:  "x",
+		Type: reflect.TypeOf(uint64(0)),
+	})
+	fmt.Println(fields)
+}
+result:
+[{S  string s 0 [] false} {X  uint64 x 0 [] false}]
+```
+这其实是一个官方的例子，不过已经确实可以生成一个StructField的结构。至于其它的字段，暂时也用不到它。  
+接着我们就可以直接转化了。  
+```go
+newstruct:=reflect.StructOf(fields)
+fmt.Println(newstruct)
+result:
+struct { S string "s"; X uint64 "x" }
+```
+一共两种类型，string和unit64。  
+接着，我再改一下，让他赋值。  
+```go
+newstruct:=reflect.StructOf(fields)
+val := reflect.New(newstruct).Elem()
+val.FieldByName("S").Set(reflect.ValueOf("hello"))
+val.FieldByName("X").Set(reflect.ValueOf(uint64(100)))
+fmt.Print(val)
+
+result:
+{hello 100}
+```
+需要注意的一点就是，把Type转到Value类型的时候，要使用`reflect.New(newstruct)`方法。  
+
+这个方法就这么完了？如果从粗的来看，差不多就是这么个用法，当然，还有很多细节的内容，比如说type StructField struct {}里面的几个变量。  
+前面我们就用了  
+Name表示变量的名称  
+Type表示变量的类型   
+Tag表示变量的标签  
+此外还有  
+PkgPath，其实就是表示这个变量是哪个包的  
+Offset，表示变量在结构体中的顺序  
+Index，表示变量用Type.FieldByIndex()查询时对应的索引值 
+Anonymous，不是特别清楚，大概和变量的匿名有关系吧  
+
