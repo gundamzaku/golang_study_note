@@ -10,6 +10,26 @@ http://www.graphviz.org/Download_windows.php
 先写一段代码：
 
 ```go
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
+func main() {
+	flag.Parse()
+	fmt.Println(*cpuprofile)
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+		var i int
+		var val []int
+		for i=0;i<10000 ;i++  {
+			fmt.Println(i)
+			val = append(val,i)
+		}
+	}
+}
 ```
 编译  
 go build  
