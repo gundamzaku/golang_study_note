@@ -1,3 +1,5 @@
+## pprof
+
 官方教程：  
 https://blog.golang.org/profiling-go-programs
 
@@ -66,3 +68,60 @@ Showing top 5 nodes out of 16 (cum >= 350ms)
 ```
 top5 -cum，以递减的形式。
 
+## memprof
+
+大体上和pprof差不多，不过代码部分有不同。  
+
+```go
+
+var memprofile = flag.String("memprofile", "", "write memory profile to this file")
+
+func main() {
+	flag.Parse()
+	fmt.Println(*memprofile)
+	lsgraph := NewLSG()
+	cfgraph := NewCFG()
+	FindHavlakLoops(cfgraph, lsgraph)
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var i int
+		var val []int
+		for i=0;i<10000 ;i++  {
+			fmt.Println(i)
+			val = append(val,i)
+		}
+
+		pprof.WriteHeapProfile(f)
+		f.Close()
+		return
+
+	}
+}
+```
+这里还引入了一个代码库，可以参考：  
+https://github.com/rsc/benchgraffiti/blob/master/havlak/havlak1.go  
+
+然后命令行下执行：
+reflect --memprofile=rf.mprof  
+生成文件即可。  
+
+go tool pprof reflect.exe rf.mprof  
+
+然后：
+top5就可以看数据了  
+```
+1024.09kB of 1024.09kB total (  100%)
+Showing top 5 nodes out of 15 (cum >= 512.08kB)
+      flat  flat%   sum%        cum   cum%
+  512.08kB 50.00% 50.00%   512.08kB 50.00%  regexp.compile
+  512.01kB 50.00%   100%   512.01kB 50.00%  unicode/utf16.Encode
+         0     0%   100%   512.01kB 50.00%  fmt.Fprintln
+         0     0%   100%   512.01kB 50.00%  fmt.Println
+         0     0%   100%   512.08kB 50.00%  internal/pprof/profile.init
+```
+
+其它的与pprof差不多
