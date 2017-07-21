@@ -115,3 +115,36 @@ Offset，表示变量在结构体中的顺序
 Index，表示变量用Type.FieldByIndex()查询时对应的索引值 
 Anonymous，不是特别清楚，大概和变量的匿名有关系吧  
 
+当然了，在定义的Type类型里面，有更多的类型可以选择。比如下面一段就是声明了一个指针和一个接口。  
+```go
+type ifc interface {
+	getName()
+}
+type S struct {val int}
+func (this *S) getName() {
+	fmt.Println("hello")
+}
+
+func main(){
+ 	var p *string
+
+	var fields []reflect.StructField
+	fields = append(fields,reflect.StructField{
+		Name: "S",
+		Tag:  "s",
+		Type: reflect.TypeOf(p ),
+	})
+
+	fields = append(fields,reflect.StructField{
+		Name: "X",
+		Tag:  "x",
+		Type: reflect.TypeOf(S{}),
+	})
+	fmt.Println(fields)
+
+}
+
+result:
+[{S  *string s 0 [] false} {X  main.S x 0 [] false}]
+```
+
