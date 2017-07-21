@@ -1,3 +1,6 @@
+官方教程：  
+https://blog.golang.org/profiling-go-programs
+
 首先要安装Graphviz  
 windows的话，去  
 http://www.graphviz.org/Download_windows.php  
@@ -42,6 +45,7 @@ go tool pprof reflect.exe reflect.prof
 
 pprof>>web  
 可以生成视图并查看  
+web mapaccess1//暂时不解  
 
 其它的命令：
 list func(函数名），可以看到具体函数的执行顺序list。
@@ -60,3 +64,5 @@ Showing top 5 nodes out of 16 (cum >= 350ms)
       10ms  2.78%   100%       10ms  2.78%  sync.(*Mutex).Unlock
          0     0%   100%      350ms 97.22%  fmt.Fprintln
 ```
+top5 -cum，以递减的形式。
+
