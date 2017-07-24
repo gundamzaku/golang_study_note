@@ -1,4 +1,5 @@
 在io.go的代码段中，有一段都是用来定义接口的。  
+```go
 1、type Reader interface {}  
 2、type Writer interface {}  
 3、type Closer interface {}  
@@ -20,6 +21,7 @@
 19、type RuneReader interface {}  
 20、type RuneScanner interface {}  
 21、type stringWriter interface {}  
+```
 一共21个……这么多。目前来说，我并不知道他们的实际用处。  
 
 接下来，又定义了几组对外的公有函数：   
