@@ -129,3 +129,26 @@ step.2:转入string包的reader.go
 step.3:返回`func NewReader(s string) *Reader { return &Reader{s, 0, -1} }`把Reader结构体（其实是对象）返回。  
 step.4:`p := make([]byte, num)`初始化一个比特变量  
 step.5:`n, err := reader.Read(p)`调用reader对象的Read方法，返回比特数据。  
+
+总得来说，Reader这个接口是交给其它的方法去自行实现的接口，他本身不作任何数据处理。除了上面的读取字符串以外。还有：  
+os.Stdin读取输入的流  
+位于os包的file.go文件中 
+```go
+func (f *File) Read(b []byte) (n int, err error) {
+	if err := f.checkValid("read"); err != nil {
+		return 0, err
+	}
+	n, e := f.read(b)
+	if n == 0 && len(b) > 0 && e == nil {
+		return 0, io.EOF
+	}
+	if e != nil {
+		err = &PathError{"read", f.name, e}
+	}
+	return n, err
+}
+```
+
+还有位于读取文件：os.Open（同上）  
+
+其实我最想了解的是网络io一块的内容，在net包中，不过暂时先放一下了，等下次读到net的时候再深入一下。  
