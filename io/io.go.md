@@ -61,9 +61,71 @@ func (s *SectionReader) Size() int64 { return s.limit - s.base }
 ```
 
 ```go
-type teeReader struct {
+type teeReader struct { //私有
 	r Reader
 	w Writer
 }
 func (t *teeReader) Read(p []byte) (n int, err error) {
 ```
+
+以上就是io.go的全貌了。那么怎么用起来呢？先从第一个方法看起吧。
+
+```go
+type Reader interface {
+	Read(p []byte) (n int, err error)
+}
+```
+第一个是接口，其实在io的操作里面，Reader和Write是必不可少的东西，可是如此一来，这个接口是在哪里实现的呢？  
+在网上，我找到一个例子。  
+
+```go
+func main()  {
+	data, err := ReadFrom(strings.NewReader("from string"), 12)
+	fmt.Println(data)
+	fmt.Println(err)
+}
+
+func ReadFrom(reader io.Reader, num int) ([]byte, error) {
+	p := make([]byte, num)
+	n, err := reader.Read(p)
+	if n > 0 {
+		return p[:n], nil
+	}
+	return p, err
+}
+result:
+[102 114 111 109 32 115 116 114 105 110 103]
+<nil>
+```
+可以看到，传入的是一个io.Reader类型，而这个类型经由strings.NewReader("from string")转化。  
+于是我又转到string包中，发现了对Reader接口的实行。  
+```go
+func (r *Reader) Read(b []byte) (n int, err error) {
+	if r.i >= int64(len(r.s)) {
+		return 0, io.EOF
+	}
+	r.prevRune = -1
+	n = copy(b, r.s[r.i:])
+	r.i += int64(n)
+	return
+}
+```
+它是继承自
+```go
+// A Reader implements the io.Reader, io.ReaderAt, io.Seeker, io.WriterTo,
+// io.ByteScanner, and io.RuneScanner interfaces by reading
+// from a string.
+type Reader struct {
+	s        string
+	i        int64 // current reading index
+	prevRune int   // index of previous rune; or < 0
+}
+```
+从注释上就可以看出，这个结构体又实现了io.Reader, io.ReaderAt, io.Seeker, io.WriterTo，io.ByteScanner, and io.RuneScanner这么多的接口。。  
+
+先撸一遍代码的顺序  
+step.1:`strings.NewReader("from string")`  
+step.2:转入string包的reader.go  
+step.3:返回`func NewReader(s string) *Reader { return &Reader{s, 0, -1} }`把Reader结构体（其实是对象）返回。  
+step.4:`p := make([]byte, num)`初始化一个比特变量  
+step.5:`n, err := reader.Read(p)`调用reader对象的Read方法，返回比特数据。  
