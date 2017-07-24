@@ -20,7 +20,7 @@
 18、type ByteWriter interface {}  
 19、type RuneReader interface {}  
 20、type RuneScanner interface {}  
-21、type stringWriter interface {}  
+21、type stringWriter interface {}  //私有
 ```
 一共21个……这么多。目前来说，我并不知道他们的实际用处。  
 
@@ -32,10 +32,9 @@
 4、func CopyN(dst Writer, src Reader, n int64) (written int64, err error) {}  
 5、func Copy(dst Writer, src Reader) (written int64, err error) {}  
 6、func CopyBuffer(dst Writer, src Reader, buf []byte) (written int64, err error) {}  
-`下面这个是私有的`  
-7、func copyBuffer(dst Writer, src Reader, buf []byte) (written int64, err error) {}  
+7、func copyBuffer(dst Writer, src Reader, buf []byte) (written int64, err error) {}  //私有
 8、func LimitReader(r Reader, n int64) Reader { return &LimitedReader{r, n} }  
-func TeeReader(r Reader, w Writer) Reader {}
+9、func TeeReader(r Reader, w Writer) Reader {}
 ```
 
 最后，定义了几组对象：
