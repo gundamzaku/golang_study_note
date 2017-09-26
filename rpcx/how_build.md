@@ -16,22 +16,16 @@ rpcx的安装是很简单的，只要执行：
 之后再重复最上面的get即可。  
 我在安装的时候报了个错，
 `# cd D:\go_code\src\golang.org\x\crypto; git config remote.origin.url
-fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented
-package golang.org/x/crypto/pbkdf2: exit status 128
+fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented package golang.org/x/crypto/pbkdf2: exit status 128
 # cd D:\go_code\src\golang.org\x\crypto; git config remote.origin.url
-fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented
-package golang.org/x/crypto/salsa20: exit status 128
+fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented package golang.org/x/crypto/salsa20: exit status 128
 # cd D:\go_code\src\golang.org\x\crypto; git config remote.origin.url
-fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented
-package golang.org/x/crypto/tea: exit status 128
+fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented package golang.org/x/crypto/tea: exit status 128
 # cd D:\go_code\src\golang.org\x\crypto; git config remote.origin.url
-fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented
-package golang.org/x/crypto/twofish: exit status 128
+fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented package golang.org/x/crypto/twofish: exit status 128
 # cd D:\go_code\src\golang.org\x\crypto; git config remote.origin.url
-fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented
-package golang.org/x/crypto/xtea: exit status 128
+fatal: Invalid symlink 'D:/go_code/src/golang.org/x/crypto': Function not implemented package golang.org/x/crypto/xtea: exit status 128
 # cd D:\go_code\src\golang.org\x\net; git config remote.origin.url
-fatal: Invalid symlink 'D:/go_code/src/golang.org/x/net': Function not implemented
-package golang.org/x/net/ipv4: exit status 128
+fatal: Invalid symlink 'D:/go_code/src/golang.org/x/net': Function not implemented package golang.org/x/net/ipv4: exit status 128
 `
 目前暂时原因不明。  
