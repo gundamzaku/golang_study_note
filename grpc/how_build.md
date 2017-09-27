@@ -79,3 +79,26 @@ message HelloReply {
 在这里，我们还需要一个工具，叫`https://developers.google.com/protocol-buffers/`，只有装了这个东西，才可以执行proto的命令来调用上面装好的插件。  
 
 我因为是在windows下面，所以就下载`protoc-3.3.0-win32.zip`  
+
+把zip解开，里面的`protoc.exe`放到Go的安装目录里的bin目录下面。这样就能在命令行下面执行了。  
+
+执行一次  
+
+`protoc --go_out=./  helloworld.proto`  
+
+然后会发现在目录下生成了一个`helloworld.pb.go`，然后我试着编译一下之前创建的server端的项目，没有反应，报错了。  
+
+奇怪，生成前用系统自带的`helloworld.pb.go`是正常的，可是生成后的`helloworld.pb.go`就出了问题，看这个样子是生成的问题了。  
+
+在网上我找到一篇文章，正好提到了这一点。  
+
+```
+生成命令得是 protoc grpc-test/helloworld/helloworld.proto --go_out=plugins=grpc:.
+这里要指定插件支持grpc,否则不会生成Service的接口.
+```
+
+是否如此？我验证一下。  
+
+发现编译通过。程序一切正常！  
+
+至此，我已经明白了所有的gRpc的部署方式。基本上也不脱离于这二个步骤。
