@@ -22,7 +22,7 @@ $ go get github.com/grpc/grpc-go
 ## 第二步 运用protobuf  
 
 这个东西就有些费解了，其实可以把它简单的当成一个文件代码生成器，主要是用来生成一套固定标准的代码的。  
-protobuf的相关内容在这里，有好几套标准，分别对应不同的语言，也就是说你如果想用XX语言来与gRpc相联，就要用这个语言的protobuf。  
+protobuf的相关内容在这里，有好几套标准的插件，分别对应不同的语言，也就是说你如果想用XX语言来与gRpc相联，就要用这个语言的protobuf插件。   
 `https://github.com/google/protobuf/releases`  
 
 可是里面唯独没有Go语言的，其实是在`https://github.com/golang/protobuf`里，用`go get`的方式可以获得。  
@@ -33,9 +33,49 @@ protobuf的相关内容在这里，有好几套标准，分别对应不同的语
 我把它COPY到了我的GO安装目录C:\Go\bin下面  
 
 接着就可以在命令行下面运行protoc命令了。  
+
+可是要怎么用呢？  
+
+看文档：you can find out lots more about how to define a service in a .proto file in What is gRPC? and gRPC Basics: Go.   
+
+顺藤摸瓜，先来到What is gRPC页面。
+
+又找到一条： you can find out more in the proto3 language guide and the Go generated code guide
+
+好像有点复杂，已经成了一套语言标准了。  
+`https://developers.google.com/protocol-buffers/docs/proto3`
+
+先不管了，我们还是按照最简单的方式来做，在上面提到的example目录里面，可以找到helloworld目录里面有一个helloworld.proto的文件。  
+这是官方已经帮我们写好的。  
+
 ```go
-protoc --go_out=. *.proto
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.helloworld";
+option java_outer_classname = "HelloWorldProto";
+
+package helloworld;
+
+// The greeting service definition.
+service Greeter {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
 ```
 
-这是修改输出的目录  
+可是里面怎么是Java的包定义呢……先不管它。  
 
+在这里，我们还需要一个工具，叫`https://developers.google.com/protocol-buffers/`，只有装了这个东西，才可以执行proto的命令来调用上面装好的插件。  
+
+我因为是在windows下面，所以就下载`protoc-3.3.0-win32.zip`  
