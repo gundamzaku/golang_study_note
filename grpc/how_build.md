@@ -24,5 +24,18 @@ $ go get github.com/grpc/grpc-go
 这个东西就有些费解了，其实可以把它简单的当成一个文件代码生成器，主要是用来生成一套固定标准的代码的。  
 protobuf的相关内容在这里，有好几套标准，分别对应不同的语言，也就是说你如果想用XX语言来与gRpc相联，就要用这个语言的protobuf。  
 `https://github.com/google/protobuf/releases`  
+
 可是里面唯独没有Go语言的，其实是在`https://github.com/golang/protobuf`里，用`go get`的方式可以获得。  
+
+这个代码主要是为了生成`protoc-gen-go.exe`的可执行文件的，我用`go get`的时候它自动帮我生成好了。  
+
+要注意的是，这个文件是默认放在你的`GO_PATH`里设置的目录里面的bin目录下面的。这样才能让这个文件可以在命令行模式下面自动执行。如果不对，你可以自行设置一下，比如我，我的`GO_PATH`指定在D:\Go_code目录下面，所以文件也生成在了D:\Go_code\bin下面 
+我把它COPY到了我的GO安装目录C:\Go\bin下面  
+
+接着就可以在命令行下面运行protoc命令了。  
+```go
+protoc --go_out=. *.proto
+```
+
+这是修改输出的目录  
 
