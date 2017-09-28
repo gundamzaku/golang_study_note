@@ -99,3 +99,89 @@ var SearchRequest_Corpus_value = map[string]int32{
 
 产生了一套常量，两个map  
 
+有两个要注意的地方：
+一，必须有个零值，也就是`UNIVERSAL = 0;`，你改成别的数字，转化的时候就会报错`demo.proto: The first enum value must be zero in proto3.`
+二，零值必须放在第一个，不然还是会报错。用proto2的语法来编译，第一个枚举值总是固定的。
+
+枚举类型可以设置相同的值，必须加上一段代码`option allow_alias = true;`  
+不加会报错`demo.proto: "SearchRequest.IMAGES" uses the same enum value as "SearchRequest.WEB". If this is intended, set 'option allow_alias = true;' to the enum definition.`  
+加了就正常  
+```go
+enum Corpus {
+    option allow_alias = true;
+    UNIVERSAL = 0;
+    WEB = 1;
+    IMAGES = 1;
+    LOCAL = 3;
+    NEWS = 4;
+    PRODUCTS = 5;
+    VIDEO = 6;
+}
+```
+
+基本上也就这些花头了，可以跳过了，如果碰到更深的问题，可以回过头来再看一下文档。  
+
+## 使用其它的消息类型  
+
+一种方式，用repet  
+```go
+message SearchResponse {
+  repeated Result results = 1;
+}
+
+message Result {
+  string url = 1;
+  string title = 2;
+  repeated string snippets = 3;
+}
+```
+可以看到，生成的  
+```go
+type SearchResponse struct {
+	Results []*Result `protobuf:"bytes,1,rep,name=results" json:"results,omitempty"`
+}
+```
+里面包含了一个Result的结构体指针数组（好复杂）  
+
+Result仍然在下面有定义，是一个结构体。  
+值得注意的是，看到`Snippets []string`，原来repet的意思就是……嗯，就是产生数组吧。  
+```go
+type Result struct {
+	Url      string   `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
+	Title    string   `protobuf:"bytes,2,opt,name=title" json:"title,omitempty"`
+	Snippets []string `protobuf:"bytes,3,rep,name=snippets" json:"snippets,omitempty"`
+}
+```
+
+### 导入  
+这个更简单了，就是：  
+```go
+import "myproject/other_protos.proto";
+```
+这样的话，可以把proto拆分成多个文件，不过一般这是要搞大项目才用到了。  
+
+import还有一个属性：  
+```import public "new.proto";```
+没错，就是这个public，什么意思呢？  
+
+说是有时候你会要把.proto文件移到一个新的地方去，文件移走了，那以前的代码的import就出问题了。  
+所以你得在原来的地方再弄一个.proto文件做一个新的指向。  
+这听起来似乎也没什么卵用么。  
+
+```
+举个例子  
+new.proto新文件
+所有的代码放在这里了
+
+old.proto老文件
+import public "new.proto";这里就重定向了
+import "other.proto";
+
+client.proto客户端文件
+import "old.proto";
+可以看到other.proto文件就没用了。（干嘛不直接删除了？）
+```
+
+### 使用proto2消息类型  
+这个不用看了，没卵用，真有用到的时候再看也不迟。  
+
