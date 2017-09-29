@@ -34,12 +34,54 @@ func (m *SearchRequest) Reset(){
 在上面的例子中，所有的字段都是<a href="https://developers.google.com/protocol-buffers/docs/proto3#scalar">标量类型</a>：两个整形和一个字符。标量类型的意思就是四大类型（布尔、浮点、整型、字符）。然而，你也能给字段用指定的合成类型，比如说<a href="https://developers.google.com/protocol-buffers/docs/proto3#enum">枚举</a>，等…… 
 
 ### 分配标签（tags）  
-每个字段有一个惟一的数字标签，这是用来识别你在<a href="https://developers.google.com/protocol-buffers/docs/encoding">message二进制格式</a>下的字段的，在使用中没事别去改。注意，标签（tags）如果值在1-15以内的话，解码时按一个byte来算，包含识别数字和字段类型。具体的可以去看<a href="https://developers.google.com/protocol-buffers/docs/encoding#structure">Protocol Buffer Encoding</a>
+每个字段有一个惟一的数字标签，这是用来识别你在<a href="https://developers.google.com/protocol-buffers/docs/encoding">message二进制格式</a>下的字段的，在使用中没事别去改。注意，标签（tags）如果值在1-15以内的话，解码时按一个byte来算，包含识别数字和字段类型。具体的可以去看<a href="https://developers.google.com/protocol-buffers/docs/encoding#structure">Protocol Buffer Encoding</a>  
+从16到2047的话，则要用2个byte来计算了，所以，对于你代码中需要频繁出现的message元素，你应该知道要怎么做了。  
+同时，考虑到将来的话，对于你感觉可能会用的元素，预留一些1-15之内的标签。  
 
-message可以创建多个。  
+最小的标签是1，最大的是 229 - 1, 或者 536,870,911（一般是不会用到这么大的），19000 到 19999这个段内的数字不能被使用（被用做FieldDescriptor::kFirstReservedNumber 到 FieldDescriptor::kLastReservedNumber 的预定义了。）反正用了会报错，同样的，你也不能用之前保留的标签。
+
+### 指定字段规则  
+
+Message字段修饰符有以下几种：
+* singular：一个设计良好的message有0或1个这样的字段（但是不能大于1）  
+* repeated：这个字段在设计良好的message中被重复多次（包括0），重复值的顺序将被保存。  
+
+在proto3，标量数值类型的repeated字段默认使用packed编码。  
+关于packed编码，在 <a href="https://developers.google.com/protocol-buffers/docs/encoding#packed">Protocol Buffer Encoding</a> 中有详细介绍。
+
+### 添加多个Message类型
+没什么花头，就是一个.proto文件里面可以有多个message，其中有提到，如果你想定义一个回复的message格式来响应你的SearchResponse，你可以这么写：  
+```go
+message SearchRequest {
+  string query = 1;
+  int32 page_number = 2;
+  int32 result_per_page = 3;
+}
+
+message SearchResponse {
+ ...
+}
+```
+### 添加注释  
+这真不用多说了，双斜杠（//）
+
+### 保留字段  
+如果你通过整个删除或者注释字段来更新message类型，将来的用户在他们对此类型进行更新操作时可以重用标签号码（tag number）。如果他后来加载同样的.proto文件的旧版本时会引发很严重的问题。包括数据错误，隐私错误等。一种方式确认这种情况不会发生就是指定你删除的字段的字段标签tags（和/或者名字，在JSON序列中它也能引发问题）是被保留的。协议编译器（protocol buffer compiler）将会在将来任何一个用户尝试使用这些字段标识符的时候会进行警告。
+
+```go
+message Foo {
+  reserved 2, 15, 9 to 11;
+  reserved "foo", "bar";
+}
+```
+注意你不能在同一个reserved 声明中混合名字和标签码。  
+
+### 如何产生你的.proto文件  
+
+可以跳过了，反正就是用 <a href="https://developers.google.com/protocol-buffers/docs/proto3#generating">protocol buffer compiler</a>编译的时候，不同的语言产生不同类型的文件。知道一下就行了。  
 
 ## 标量值类型  
-这只是定义了各种不同语言的一些标准，具体可以直接看文档。  
+这只是定义了各种不同语言的一些标准，太多了，没什么花头，具体可以直接看文档。  
 
 ## 默认值  
 
