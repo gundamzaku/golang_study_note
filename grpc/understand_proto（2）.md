@@ -153,4 +153,34 @@ message Profile {
   }
 }
 ```
+编译，生成GO文件。  
+
+我自己写了一个客户端的代码：  
+```go
+p := new(account.Profile)
+p.Avatar = &account.Profile_ImageUrl{"http://example.com/image.png"}
+fmt.Println(p.GetAvatar())
+p.Avatar = &account.Profile_ImageData{nil}
+fmt.Println(p.GetAvatar())
+```
+这个就算是Set了吧。意思大概就是一次只能设置一个字段？  
+
+* 如果解析在wire中的同一个oneof中的多个成员，只有最后一个成员是被解析的消息体所使用的。（好吧，看到有wire就表示我不是很理解了）  
+* oneof不能repeated。  
+* 反射API在oneof字段下是可以工作的。  
+* 如果你使用C++……算了我不翻了，反正我目前是不会用到C++的。  
+* 还是在C++中……我还是不翻。  
+
+### 向后兼容的问题 
+
+在增加或移除oneof字段的时候一定要小心。如果检查下来oneof的值返回None/NOT_SET，这会意味着oneof将不能被设置或它已经在字段中被其它版本的oneof所设置。因此你将无法知道在wire中的未知字段是否是oneof的成员。  
+
+### Tag重用的问题  
+
+* <b>从oneof中移入或移出字段：</b>在message被序列化和解析的时候你将失去一些你的信息（一些字段将被清除）。
+* <b>删除或增加字段：</b>这在message被序列化和解析的时候可能清除你当前设置oneof字段。
+* <b>分割或合并字段：</b>这和常规字段的处理方式一样。
+
+看（翻译）到这里，我也快吐了。下次再继续吧。  
+
 
