@@ -119,17 +119,38 @@ message SampleMessage {
   }
 }
 ```
-*  在oneof中，oneof定义中可以再套oneof，不过repeated 关键字是不能被使用的。  
-在生成的代码中，oneof字段也有getters 和setters，如同常规的字段一样。
+这个官方的例子不好，少了一段：  
+```go
+message SubMessage {
+  string username = 1;
+}
+```
+
+* 在oneof中，oneof定义中可以再套oneof，不过repeated 关键字是不能被使用的。  
+在生成的代码中，oneof字段也有getters 和setters，如同常规的字段一样。 
+你能得到一个特别的方法去检查在oneof中哪一个值被设定。其它的，自个儿去看你所选择的语言的对应的API参考吧。  
 
 ### oneOf的特性 
 
-*  用了一个oneOf以后，会自动清除掉其它的oneOf成员。也就是你设置了多个oneOf，只有最后一个是有值有效的。
+* 用了一个oneOf以后，会自动清除掉其它的oneOf成员。也就是你设置了多个oneOf，只有最后一个是有值有效的。
 ```go
 SampleMessage message;
 message.set_name("name");
 CHECK(message.has_name());
 message.mutable_sub_message();   // Will clear name field.
 CHECK(!message.has_name());
+```
+这是官方给出的例子，只是一个通用的说明而已，如果你想确实的运行，这个是不能用的。以我现在学的Go为例，我需要到Go的专门的API页面去看一下：  
+https://developers.google.com/protocol-buffers/docs/reference/go-generated#singular-scalar-proto3  
+
+可以看到一个非常棒的，也确实可以用的例子：  
+```go
+package account;
+message Profile {
+  oneof avatar {
+    string image_url = 1;
+    bytes image_data = 2;
+  }
+}
 ```
 
