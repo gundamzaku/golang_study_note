@@ -104,8 +104,13 @@ message ErrorStatus {
 看说明是针对JAVA的pack() 和 unpack()，C++的PackFrom() 和 UnpackTo()的。记得这点就好，如果以后用到再说。  
 
 ## oneOf之一  
+
 这又是一个大的模块
-### 使用oneOf  
+说明：如果你的消息体有很多字段并且在同一时间最多只有一个字段会被设置，你能强制这个行为，并且通过使用oneof特性来节省内存。  
+
+看上去有点深奥。
+
+### 使用oneOf  
 ```go
 message SampleMessage {
   oneof test_oneof {
@@ -113,5 +118,18 @@ message SampleMessage {
     SubMessage sub_message = 9;
   }
 }
+```
+*  在oneof中，oneof定义中可以再套oneof，不过repeated 关键字是不能被使用的。
+在生成的代码中，oneof字段也有getters 和setters，如同常规的字段一样。
+
+### oneOf的特性 
+
+*  用了一个oneOf以后，会自动清除掉其它的oneOf成员。也就是你设置了多个oneOf，只有最后一个是有值有效的。
+```go
+SampleMessage message;
+message.set_name("name");
+CHECK(message.has_name());
+message.mutable_sub_message();   // Will clear name field.
+CHECK(!message.has_name());
 ```
 
