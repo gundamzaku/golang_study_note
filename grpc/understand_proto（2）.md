@@ -119,7 +119,7 @@ message SampleMessage {
   }
 }
 ```
-*  在oneof中，oneof定义中可以再套oneof，不过repeated 关键字是不能被使用的。
+*  在oneof中，oneof定义中可以再套oneof，不过repeated 关键字是不能被使用的。  
 在生成的代码中，oneof字段也有getters 和setters，如同常规的字段一样。
 
 ### oneOf的特性 
