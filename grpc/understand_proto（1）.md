@@ -31,10 +31,10 @@ func (m *SearchRequest) Reset(){
 }
 ```
 ### 指定字段类型
-在上面的例子中，所有的字段都是标量类型：两个整形和一个字符。标量类型的意思就是四大类型（布尔、浮点、整型、字符）。然而，你也能给字段用指定的合成类型，比如说枚举，等…… 
+在上面的例子中，所有的字段都是<a href="https://developers.google.com/protocol-buffers/docs/proto3#scalar">标量类型</a>：两个整形和一个字符。标量类型的意思就是四大类型（布尔、浮点、整型、字符）。然而，你也能给字段用指定的合成类型，比如说<a href="https://developers.google.com/protocol-buffers/docs/proto3#enum">枚举</a>，等…… 
 
 ### 分配标签（tags）  
-每个字段有一个惟一的数字标签，这是用来识别你在message二进制格式下的字段的，在使用中没事别去改。注意，标签（tags）如果值在1-15以内的话，解码时按一个byte来算，包含识别数字和字段类型。具体的可以去看<a href="https://developers.google.com/protocol-buffers/docs/encoding#structure" target="_blank">Protocol Buffer Encoding</a>
+每个字段有一个惟一的数字标签，这是用来识别你在<a href="https://developers.google.com/protocol-buffers/docs/encoding">message二进制格式</a>下的字段的，在使用中没事别去改。注意，标签（tags）如果值在1-15以内的话，解码时按一个byte来算，包含识别数字和字段类型。具体的可以去看<a href="https://developers.google.com/protocol-buffers/docs/encoding#structure">Protocol Buffer Encoding</a>
 
 message可以创建多个。  
 
