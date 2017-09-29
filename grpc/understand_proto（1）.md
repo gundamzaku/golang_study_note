@@ -85,6 +85,8 @@ message Foo {
 
 ## 默认值  
 
+当一个消息被解析，如果编码的message不包含特别的singular元素，解析的对象的相应字段将会设置一个默认的值。
+
 对于strings, 默认值为空.  
 对于bytes, 默认值也是空.  
 对于bools, 默认值是false.  
@@ -149,8 +151,8 @@ var SearchRequest_Corpus_value = map[string]int32{
 产生了一套常量，两个map  
 
 有两个要注意的地方：
-一，必须有个零值，也就是`UNIVERSAL = 0;`，你改成别的数字，转化的时候就会报错`demo.proto: The first enum value must be zero in proto3.`
-二，零值必须放在第一个，不然还是会报错。用proto2的语法来编译，第一个枚举值总是固定的。
+* 必须有个零值，也就是`UNIVERSAL = 0;`，你改成别的数字，转化的时候就会报错`demo.proto: The first enum value must be zero in proto3.`
+* 零值必须放在第一个，不然还是会报错。用proto2的语法来编译，第一个枚举值总是固定的。
 
 枚举类型可以设置相同的值，必须加上一段代码`option allow_alias = true;`  
 不加会报错`demo.proto: "SearchRequest.IMAGES" uses the same enum value as "SearchRequest.WEB". If this is intended, set 'option allow_alias = true;' to the enum definition.`  
@@ -168,11 +170,14 @@ enum Corpus {
 }
 ```
 
+枚举常量必须在32位bit整数范围之内，因为枚举的值在wire上使用的是<a href="https://developers.google.com/protocol-buffers/docs/encoding">可变编码</a>，使用负数是低效且不被推荐的。你能在message定义内/或外去定义一个枚举，如同上面的例子一样。如果定义在外部，那这些枚举能在你的.proto文件里的任何message定义中重用。你也能在message中声明一个枚举类型，而采用MessageType.EnumType的语法方式成为其它message中的类型字段。
+
 基本上也就这些花头了，可以跳过了，如果碰到更深的问题，可以回过头来再看一下文档。  
 
 ## 使用其它的消息类型  
 
-一种方式，用repet  
+你能使用其它的message类型作为字段类型。例如，让我们说你想在每一个SearchResponse message内包含Result message，去如此做，你能在同样的.proto文件中定义一个Result message类型，然后在SearchResponse中指定一个Result类型的字段：
+
 ```go
 message SearchResponse {
   repeated Result results = 1;
@@ -184,25 +189,8 @@ message Result {
   repeated string snippets = 3;
 }
 ```
-可以看到，生成的  
-```go
-type SearchResponse struct {
-	Results []*Result `protobuf:"bytes,1,rep,name=results" json:"results,omitempty"`
-}
-```
-里面包含了一个Result的结构体指针数组（好复杂）  
 
-Result仍然在下面有定义，是一个结构体。  
-值得注意的是，看到`Snippets []string`，原来repet的意思就是……嗯，就是产生数组吧。  
-```go
-type Result struct {
-	Url      string   `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
-	Title    string   `protobuf:"bytes,2,opt,name=title" json:"title,omitempty"`
-	Snippets []string `protobuf:"bytes,3,rep,name=snippets" json:"snippets,omitempty"`
-}
-```
-
-### 导入  
+### 导入定义  
 这个更简单了，就是：  
 ```go
 import "myproject/other_protos.proto";
@@ -230,6 +218,7 @@ client.proto客户端文件
 import "old.proto";
 可以看到other.proto文件就没用了。（干嘛不直接删除了？）
 ```
+协议编译器在编译的时候，使用`-I/--proto_path`参数来设置指定的目录，编译时便会在这个目录中搜索要导入的文件。如果没有的话，编译器会查当前目录。一般情况下你应该设置`proto_path`为你项目的根目录，并设置合理的名称。
 
 ### 使用proto2消息类型  
 这个不用看了，没卵用，真有用到的时候再看也不迟。  
