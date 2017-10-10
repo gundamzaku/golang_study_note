@@ -1,0 +1,26 @@
+## 选项  
+
+在.proto文件中个别的声明能被数字选项标注，选项不会改变声明的全部含义，但是可以影响特别的内容的处理方式。有效的选项的列表定义在google/protobuf/descriptor.proto中。  
+
+一些选项是文件级别的选项，意味着它们可以写在最外层，而不用写在message、enum或是service定义中。一些选项是message级别的选项，意味着它们可以写在message的定义内。一些选项是字段级别的选项，意味着它们可以写在字段定义中。选项也能写在枚举类型中，枚举值，service类型和service方法；然而，没有可以作用于所有类型的选项。  
+
+下面是一些常用的选项：  
+
+* <b>java_package</b>(文件选项）：表示这个包运用在你生成的Java类上。如果没有明确的java_package选项在.proto文件中，那么将采用默认的proto包（在.proto文件中特别使用"package"关键词）。然而，自打proto包不再以反向域名的方式被预期后，默认的proto包通常不是生成Java包的好方法。  
+
+```go
+option java_package = "com.example.foo";
+```
+* java_multiple_files（文件选项）：使顶层message，enums和service可以被定义在包级别，而不是在.proto文件中命名一个外部的类名。  
+`这段翻译的太吃力了，实在是能力有限，附上原文：Causes top-level messages, enums, and services to be defined at the package level, rather than inside an outer class named after the .proto file.`  
+
+```go
+option java_multiple_files = true;
+```
+
+* java_outer_classname (文件选项)：你想生成的最外层Java类的类名（因此也是文件名）。如果没有在.proto文件中明确指定java_outer_classname，那么类名将被以驼峰形式转化为.proto文件名（如foo_bar.proto成为FooBar.java）。如果没有生成Java代码，这个选项无效。  
+
+```go
+option java_outer_classname = "Ponycopter";
+```
+
