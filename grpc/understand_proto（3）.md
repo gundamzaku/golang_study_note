@@ -93,11 +93,17 @@ https://github.com/google/protobuf/blob/master/docs/third_party.md
 Proto3支持规范化的JSON编码，使其在系统之中能更简单的分享数据。这些编码在下面的表中将一个一个地进行说明：  
 
 <table border=1>
-<tr><th>proto3</th><th>JSON</th><th width="25%">JSON example</th><th>Notes</th></tr>
-<tr><td>message</td><td>object</td><td><code>{"fBar": v,
- "g": null,
- …}</code>
-</td><td>Generates JSON objects. Message field names are mapped to lowerCamelCase and become JSON object keys. <code>null</code> is accepted and treated as the default value of the corresponding field type.</td></tr>
+<tr>
+  <th>proto3</th>
+  <th>JSON</th>
+  <th width="25%">JSON 举例</th>
+  <th>注意</th></tr>
+<tr>
+  <td>message</td>
+  <td>object</td>
+  <td>{"fBar": v,"g": null,…}</td>
+  <td>
+    产生一个JSON对象。Message字段名字映射成为lowerCamelCase```第一个词的首字母小写,后面每个词的首字母大写,叫做“小骆驼拼写法”(lowerCamelCase)```的命名方式成为JSON对象的主键。 <code>null</code> is accepted and treated as the default value of the corresponding field type.</td></tr>
 <tr><td>enum</td><td>string</td><td><code>"FOO_BAR"</code></td><td>The name of the enum value as specified in proto is used.</td></tr>
 <tr><td>map&lt;K,V&gt;</td><td>object</td><td><code>{"k": v, …}</code></td><td>All keys are converted to strings.</td></tr>
 <tr><td>repeated V</td><td>array</td><td><code>[v, …]</code></td><td><code>null</code> is accepted as the empty list [].</td></tr>
