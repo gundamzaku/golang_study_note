@@ -65,4 +65,29 @@ message Foo {
 * 在JavaNano中……
 * 在C#中……
 
-这三个不翻了，我没学过@_@
+这三个不翻了，我没学过@_@  
+
+### 包和名称的解析  
+
+在protocol buffer语言中的类型名称解析像C++ 一样：首先，从最内部查找，然后至次内部`就是由内向外`，以此类推。每一个包都会被看成是其父类包的“内部（inner）”。一个“.”（例如，.foo.bar.Baz）意味着从外层范围开始向内。（有点搞，不过知道包的概念的话基本上也就这套路）
+
+protocol buffer编译器会通过分析导入的.proto文件来解析所有的类型名称。各语言产生的代码都知道如何去访问该语言的各类型。即使在范围规则上有所不同。  
+
+## 定义服务  
+
+如果你想在RPC（Remote Procedure Call 远程过程调用）系统中使用你的消息类型，你能在.proto文件中定义RPC服务的接口，并且protocol buffer编译器将产生服务接口代码，同时在你所选择的语言中进行存根`这个解释起来有点拗口，摘一段网上的说明：存根类是一个类，它实现了一个接口，但是实现后的每个方法都是空的。 `。嗯……例如，如果你想定义一个RPC服务的方法使你能接受你的查询请求（SearchRequest）并返回查询响应，你能在你的.proto文件中定义它，如下：
+
+```go
+service SearchService {
+  rpc Search (SearchRequest) returns (SearchResponse);
+}
+```
+最易懂的使用protocol buffers的RPC系统是gRPC：由Google开发的开源性的，与平台无关`就是没有程序语言限制`的RPC系统。gRPC用protocol buffers的话工作的很有效率，能让你用特别的protocol buffer编译器插件直接从你的.proto文件产生对应的RPC代码。`这段就是王婆卖瓜`  
+
+后面几段全是自己在吹逼的话，不翻了。要注意的是有一个第三方的项目，基于protocol buffers的一些扩展和现实，有兴趣可以看一下。  
+
+https://github.com/google/protobuf/blob/master/docs/third_party.md  
+
+## JSON映射  
+
+
