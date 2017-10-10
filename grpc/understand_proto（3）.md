@@ -101,27 +101,27 @@ Proto3支持规范化的JSON编码，使其在系统之中能更简单的分享�
 <tr>
   <td>message</td>
   <td>object</td>
-  <td>{"fBar": v,"g": null,…}</td>
-  <td>产生一个JSON对象。Message字段名字映射成为lowerCamelCase（第一个词的首字母小写,后面每个词的首字母大写,叫做“小骆驼拼写法”）并成为JSON对象的主键。<b>null</b> 是可以使用的，它被当作对应的字段类型的默认值。
+  <td><code>{"fBar": v,"g": null,…}</code></td>
+  <td>产生一个JSON对象。Message字段名字映射成为lowerCamelCase（第一个词的首字母小写,后面每个词的首字母大写,叫做“小骆驼拼写法”）并成为JSON对象的主键。<code>null</code> 是可以使用的，它被当作对应的字段类型的默认值。
   </td>
   </tr>
   <tr>
     <td>enum</td>
     <td>string</td>
     <td><code>"FOO_BAR"</code></td>
-    <td>The name of the enum value as specified in proto is used.</td>
+    <td>枚举值的名字在proto中被指定使用。</td>
   </tr>
   <tr>
     <td>map&lt;K,V&gt;</td>
     <td>object</td>
     <td><code>{"k": v, …}</code></td>
-    <td>All keys are converted to strings.</td>
+    <td>所有的keys都会被转化成字符。</td>
   </tr>
   <tr>
     <td>repeated V</td>
     <td>array</td>
     <td><code>[v, …]</code></td>
-    <td><code>null</code> is accepted as the empty list [].</td>
+    <td><code>null</code> 被看作是空的list[]。</td>
   </tr>
   <tr>
     <td>bool</td>
@@ -139,61 +139,61 @@ Proto3支持规范化的JSON编码，使其在系统之中能更简单的分享�
     <td>bytes</td>
     <td>base64 string</td>
     <td><code>"YWJjMTIzIT8kKiYoKSctPUB+"</code></td>
-    <td>JSON value will be the data encoded as a string using standard base64 encoding with paddings. Either standard or URL-safe base64 encoding with/without paddings are accepted.</td>
+    <td>JSON值被标准的base64编码做为数据进行编码，标准的或是能保证URL安全的base64编码进行/或不填充都是可以被接受的。</td>
   </tr>
   <tr>
     <td>int32, fixed32, uint32</td>
     <td>number</td>
     <td><code>1, -10, 0</code></td>
-    <td>JSON value will be a decimal number. Either numbers or strings are accepted.</td>
+    <td>JSON值将是一个十进制数字。数字或字符都是可以被接受的。/td>
   </tr>
   <tr>
     <td>int64, fixed64, uint64</td>
     <td>string</td>
     <td><code>"1", "-10"</code></td>
-    <td>JSON value will be a decimal string. Either numbers or strings are accepted.</td>
+    <td>JSON值将是一个十进制字符。数字或字符都是可以被接受的。</td>
   </tr>
   <tr>
     <td>float, double</td>
     <td>number</td>
     <td><code>1.1, -10.0, 0, "NaN", "Infinity"</code></td>
-    <td>JSON value will be a number or one of the special string values "NaN", "Infinity", and "-Infinity". Either numbers or strings are accepted. Exponent notation is also accepted. </td>
+    <td>JSON值将是一个数字或是一个特别的字符“NaN”，“Infinity”，和“-Infinity”，数字或字符都是可以被接受的。指数标记也可以被接受。</td>
   </tr>
   <tr>
     <td>Any</td>
     <td><code>object</code></td>
     <td><code>{"@type": "url", "f": v, … }</code></td>
-    <td>If the Any contains a value that has a special JSON mapping, it will be converted as follows: <code>{"@type": xxx, "value": yyy}</code>. Otherwise, the value will be converted into a JSON object, and the <code>"@type"</code> field will be inserted to indicate the actual data type.</td>
+    <td>如果Any包含一个有特别的JOSN映射的值，它将转化为：<code>{"@type": xxx, "value": yyy}</code>。否则，数值将被转换成一个JSON对象，<code>"@type"</code>字段将被插入一个表示实际数据类型的值。</td>
   </tr>
   <tr>
     <td>Timestamp</td>
     <td>string</td>
     <td><code>"1972-01-01T10:00:20.021Z"</code></td>
-    <td>Uses RFC 3339, where generated output will always be Z-normalized and uses 0, 3, 6 or 9 fractional digits.</td>
+    <td>使用RFC 3339, 其中产生的输出将总是z向量，使用0,3,6或9位小数。</td>
   </tr>
   <tr>
     <td>Duration</td>
     <td>string</td>
     <td><code>"1.000340012s", "1s"</code></td>
-    <td>Generated output always contains 0, 3, 6, or 9 fractional digits, depending on required precision. Accepted are any fractional digits (also none) as long as they fit into nano-seconds precision.</td>
+    <td>根据精度的需求，产生的输出总是包含0,3,6或9位小数，可以作为任意位数，精确到纳秒级别的小数（或是空）被接受。</td>
   </tr>
   <tr>
     <td>Struct</td>
     <td><code>object</code></td>
     <td><code>{ … }</code></td>
-    <td>Any JSON object. See <code>struct.proto</code>.</td>
+    <td>任何JSON对象。看<code>struct.proto</code>.</td>
   </tr>
   <tr>
     <td>Wrapper types</td>
     <td>various types</td>
     <td><code>2, "2", "foo", true, "true", null, 0, …</code></td>
-    <td>Wrappers use the same representation in JSON as the wrapped primitive type, except that <code>null</code> is allowed and preserved during data conversion and transfer.</td>
+    <td>JSON中包装（Wrappers）使用与包基本类型相同的表现形式，除了<code>null</code>是被允许的且在数据转换期间会被保留。</td>
   </tr>
   <tr>
     <td>FieldMask</td>
     <td>string</td>
     <td><code>"f.fooBar,h"</code></td>
-    <td>See <code>fieldmask.proto</code>.</td>
+    <td>见 <code>fieldmask.proto</code>.</td>
   </tr>
   <tr>
     <td>ListValue</td>
@@ -205,7 +205,7 @@ Proto3支持规范化的JSON编码，使其在系统之中能更简单的分享�
     <td>Value</td>
     <td>value</td>
     <td></td>
-    <td>Any JSON value</td>
+    <td>任意JSON值</td>
   </tr>
   <tr>
     <td>NullValue</td>
