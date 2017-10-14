@@ -7,6 +7,7 @@ import (
 	"log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"fmt"
 )
 
 const (
@@ -20,7 +21,7 @@ func (s *server) Command(ctx context.Context, in *pb.RedisRequest) (*pb.RedisRep
 }
 
 func main() {
-
+	fmt.Println("redis server start:");
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

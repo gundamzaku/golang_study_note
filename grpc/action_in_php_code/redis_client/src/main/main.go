@@ -5,6 +5,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	pb "proto"
+	"fmt"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 )
 
 func main() {
-
+	fmt.Println("redis client start:");
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -25,4 +26,5 @@ func main() {
 		log.Fatalf("could not greet: %v", err)
 	}
 	log.Printf("Greeting: %s", r.Result)
+	fmt.Println("Greeting: %s", r.Result)
 }
