@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package redis;
+
+service Redis {
+  rpc Command (RedisRequest) returns (RedisReply) {}
+}
+
+message RedisRequest {
+  string action = 1;
+  string param = 2;
+}
+
+// The response message containing the greetings
+message RedisReply {
+  string result = 1;
+}
