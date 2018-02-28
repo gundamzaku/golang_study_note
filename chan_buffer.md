@@ -11,11 +11,10 @@ func main() {
 	fmt.Println(<-c)
 }
 ```
-`
-fatal error: all goroutines are asleep - deadlock!
 
+fatal error: all goroutines are asleep - deadlock!  
 goroutine 1 [chan send]:
-`
+
 
 ```go
 func main() {
