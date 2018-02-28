@@ -1,5 +1,7 @@
 ### 如何理解有缓冲的通道和无缓冲的通道  
 
+先来一段高大上的英文说明：  
+
 Unbuffered channels combine communication—the exchange of a value—with synchronization—guaranteeing that two calculations (goroutines) are in a known state.
 
 不加buffer的channels结合了通信和以同步来进行值的换取，保证两个计算(goroutines)处于已知状态。（我乱翻的囧）  
