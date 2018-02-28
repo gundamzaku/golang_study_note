@@ -1,4 +1,4 @@
-### 如何理解有缓存的通道和无缓存的通道  
+### 如何理解有缓冲的通道和无缓冲的通道  
 
 Unbuffered channels combine communication—the exchange of a value—with synchronization—guaranteeing that two calculations (goroutines) are in a known state.
 
