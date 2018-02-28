@@ -1,10 +1,11 @@
-如何理解有缓存的通道和无缓存的通道  
+### 如何理解有缓存的通道和无缓存的通道  
 
 Unbuffered channels combine communication—the exchange of a value—with synchronization—guaranteeing that two calculations (goroutines) are in a known state.
 
 不加buffer的channels结合了通信和以同步来进行值的换取，保证两个计算(goroutines)处于已知状态。（我乱翻的囧）  
 
-A buffered channel can be used like a semaphore, for instance to limit throughput. In this example, incoming requests are passed to handle, which sends a value into the channel, processes the request, and then receives a value from the channel to ready the “semaphore” for the next consumer. The capacity of the channel buffer limits the number of simultaneous calls to process.
+A buffered channel can be used like a semaphore, for instance to limit throughput. In this example, incoming requests are passed to handle, which sends a value into the channel, processes the request, and then receives a value from the channel to ready the “semaphore” for the next consumer. The capacity of the channel buffer limits the number of simultaneous calls to process.  
+
 带buffered的channel能像信号量一样使用，比如用来限制吞吐量。在一个例子中，到来的请求被处理，向channel中发送了一个值，处理请求，然后从channel中接受这个值准备“信号量”给到下一个消费者。channel bufferr 的能力就是限制被同时由队列调用的数量。  
 
 `Semaphore又称信号量，是操作系统中的一个概念，Semaphore（信号量）是用来控制同时访问特定资源的线程数量，它通过协调各个线程，以保证合理的使用公共资源。`  
